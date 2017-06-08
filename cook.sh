@@ -130,7 +130,7 @@ function op {
             fi
             if [ "$skip" -eq "0" ]
             then
-                xargo update
+                cargo update
             fi
             popd > /dev/null
             ;;
