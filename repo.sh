@@ -23,8 +23,8 @@ do
         echo -e "\033[01;38;5;155mrepo - preparing $recipe\033[0m" >&2
         ./cook.sh "$recipe" prepare
     else
-        TIME_SOURCE="$(find recipes/$recipe/source -type f -not -path '*/.git*' -printf "%Ts\n" | sort -nr | head -n 1)"
-        TIME_BUILD="$(find recipes/$recipe/build -type f -not -path '*/.git*' -printf "%Ts\n" | sort -nr | head -n 1)"
+        TIME_SOURCE="$(find recipes/$recipe/source -type f -not -path '*/.git*' -exec stat -f "%Sm" -t "%s" {} + | sort -nr | head -n 1)"
+        TIME_BUILD="$(find recipes/$recipe/build -type f -not -path '*/.git*' -exec stat -f "%Sm" -t "%s" {} + | sort -nr | head -n 1)"
         if [ "$TIME_SOURCE" -gt "$TIME_BUILD" ]
         then
             echo -e "\033[01;38;5;155mrepo - repreparing $recipe\033[0m" >&2
@@ -37,7 +37,7 @@ do
         echo -e "\033[01;38;5;155mrepo - building $recipe\033[0m" >&2
         ./cook.sh "$recipe" update build stage tar
     else
-        TIME_BUILD="$(find recipes/$recipe/build -type f -not -path '*/.git*' -printf "%Ts\n" | sort -nr | head -n 1)"
+        TIME_BUILD="$(find recipes/$recipe/build -type f -not -path '*/.git*' -exec stat -f "%Sm" -t "%s" {} + | sort -nr | head -n 1)"
         TIME_STAGE="$(stat -c "%Y" recipes/$recipe/stage.tar)"
         if [ "$TIME_BUILD" -gt "$TIME_STAGE" ]
         then
