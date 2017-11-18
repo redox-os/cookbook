@@ -4080,3 +4080,29 @@ diff -ru source/uidswap.c source-new/uidswap.c
  #endif
  
  	/* Verify UID drop was successful */
+
+diff -ru source/openbsd-compat/bsd-openpty.c source-new/openbsd-compat/bsd-openpty.c
+--- source/openbsd-compat/bsd-openpty.c	2017-10-02 12:34:26.000000000 -0700
++++ source-new/openbsd-compat/bsd-openpty.c	2017-11-17 23:05:00.548837273 -0800
+@@ -34,6 +34,7 @@
+ 
+ #include "includes.h"
+ #if !defined(HAVE_OPENPTY)
++#define HAVE_OPENPTY
+ 
+ #include <sys/types.h>
+ 
+diff -ru source/openbsd-compat/openbsd-compat.h source-new/openbsd-compat/openbsd-compat.h
+--- source/openbsd-compat/openbsd-compat.h	2017-10-02 12:34:26.000000000 -0700
++++ source-new/openbsd-compat/openbsd-compat.h	2017-11-17 23:05:30.222064681 -0800
+@@ -208,10 +208,8 @@
+ int asprintf(char **, const char *, ...);
+ #endif
+ 
+-#ifndef HAVE_OPENPTY
+ # include <sys/ioctl.h>	/* for struct winsize */
+ int openpty(int *, int *, char *, struct termios *, struct winsize *);
+-#endif /* HAVE_OPENPTY */
+ 
+ #ifndef HAVE_SNPRINTF
+ int snprintf(char *, size_t, SNPRINTF_CONST char *, ...);
