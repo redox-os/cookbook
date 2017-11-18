@@ -48,6 +48,10 @@ function newlib_build {
     cd ..
     cp -r $sysroot/x86_64-unknown-redox/* $sysroot
     rm -rf $sysroot/x86_64-unknown-redox
+    
+    # manually copy bits/types/* because it's not working automatically
+    cp newlib/newlib/libc/sys/redox/include/bits/types/* $sysroot/include/bits/types
+
     rm -rf newlib
     cd build
 }
