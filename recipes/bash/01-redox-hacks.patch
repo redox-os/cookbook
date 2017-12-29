@@ -106,3 +106,25 @@ diff -ru source/sig.c source-new/sig.c
        break;
 
      default:
+diff --git a/shell.c b/shell.c
+index 45b77f9..dc92988 100644
+--- a/shell.c
++++ b/shell.c
+@@ -1276,7 +1276,7 @@ disable_priv_mode ()
+ {
+   int e;
+
+-  if (setuid (current_user.uid) < 0)
++  if (1)
+     {
+       e = errno;
+       sys_error (_("cannot set uid to %d: effective uid %d"), current_user.uid, current_user.euid);
+@@ -1285,7 +1285,7 @@ disable_priv_mode ()
+	exit (e);
+ #endif
+     }
+-  if (setgid (current_user.gid) < 0)
++  if (1)
+     sys_error (_("cannot set gid to %d: effective gid %d"), current_user.gid, current_user.egid);
+
+   current_user.euid = current_user.uid;
