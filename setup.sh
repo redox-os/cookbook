@@ -16,10 +16,10 @@ then
     echo "Installing cargo-config"
     cargo install -f cargo-config
 fi
-if [ -z "$(which xargo)" ]
+if [ -z "$(which cargo)" ]
 then
-    echo "Installing xargo"
-    cargo install -f xargo
+    echo "Must install cargo"
+    exit 1
 fi
 
 echo "cook.sh is ready to use"

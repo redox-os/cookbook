@@ -10,7 +10,7 @@ HOST=$TARGET
 ROOT="$(cd `dirname "$0"` && pwd)"
 REPO="$ROOT/repo/$TARGET"
 export PATH="${ROOT}/bin:$PATH"
-export XARGO_HOME="${ROOT}/xargo"
+export CARGO_HOME="${ROOT}/cargo"
 
 export AR="${HOST}-ar"
 export AS="${HOST}-as"

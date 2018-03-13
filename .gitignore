@@ -8,4 +8,4 @@ stage.tar
 stage.tar.gz
 stage.toml
 sysroot
-xargo
+cargo

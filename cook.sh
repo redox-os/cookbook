@@ -222,7 +222,7 @@ function op {
             fi
             if [ "$skip" -eq "0" ]
             then
-                xargo update
+                cargo update
             fi
             popd > /dev/null
             ;;
@@ -299,8 +299,7 @@ function op {
 
             if [ "$skip" -eq "0" ]
             then
-                cp -p "$ROOT/Xargo.toml" "Xargo.toml"
-                xargo build --target "$TARGET" $release_flag $CARGOFLAGS
+                cargo build --target "$TARGET" $release_flag $CARGOFLAGS
             fi
             popd > /dev/null
             ;;
@@ -320,8 +319,7 @@ function op {
 
             if [ "$skip" -eq "0" ]
             then
-                cp -p "$ROOT/Xargo.toml" "Xargo.toml"
-                xargo test --no-run --target "$TARGET" $release_flag $CARGOFLAGS
+                cargo test --no-run --target "$TARGET" $release_flag $CARGOFLAGS
             fi
             popd > /dev/null
             ;;
@@ -334,7 +332,7 @@ function op {
             fi
             if [ "$skip" -eq "0" ]
             then
-                xargo clean
+                cargo clean
             fi
             popd > /dev/null
             ;;
