@@ -1,7 +1,6 @@
-diff -rupN sdl_mixer/build-scripts/config.sub sdl_mixer-redox/build-scripts/config.sub
---- sdl_mixer/build-scripts/config.sub	2012-01-15 14:01:05.000000000 -0800
-+++ sdl_mixer-redox/build-scripts/config.sub	2016-07-27 18:17:24.513894959 -0700
-@@ -1276,7 +1276,7 @@ case $os in
+--- source/build-scripts/config.sub	2012-01-15 23:01:05.000000000 +0100
++++ build/build-scripts/config.sub	2018-05-28 11:06:51.281771000 +0200
+@@ -1276,7 +1276,7 @@
  	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
  	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -solaris* | -sym* \
@@ -9,4 +8,4 @@ diff -rupN sdl_mixer/build-scripts/config.sub sdl_mixer-redox/build-scripts/conf
 +	      | -kopensolaris* | -redox* \
  	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
  	      | -aos* | -aros* \
-| -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
