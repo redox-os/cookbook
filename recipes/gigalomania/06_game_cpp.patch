@@ -1,5 +1,5 @@
---- source/game.cpp	2018-05-29 15:03:57.176996881 +0200
-+++ build/game.cpp	2018-05-29 15:14:10.535198426 +0200
+--- source/game.cpp	2018-05-30 09:03:24.322621006 +0200
++++ build/game.cpp	2018-05-30 09:14:21.977606904 +0200
 @@ -2942,11 +2942,11 @@
  		//user_width = 1184;
  		//user_height = 720;
@@ -10,7 +10,7 @@
  			LOG("scale width 4x\n");
  		}
 -		else if( user_width >= 3*default_width_c ) {
-+		else */if( user_width >= 3*default_width_c ) {
++		else*/ if( user_width >= 3*default_width_c ) {
  			scale_width = 3.0f;
  			LOG("scale width 3x\n");
  		}
@@ -24,7 +24,7 @@
  			LOG("scale height 4x\n");
  		}
 -		else if( user_height >= 3*default_height_c ) {
-+		else */if( user_height >= 3*default_height_c ) {
++		else*/ if( user_height >= 3*default_height_c ) {
  			scale_height = 3.0f;
  			LOG("scale height 3x\n");
  		}
@@ -38,25 +38,18 @@
  			LOG("scale 4x\n");
  		}
 -		else if( screen->open(3*default_width_c, 3*default_height_c, fullscreen) ) {
-+		else */if( screen->open(3*default_width_c, 3*default_height_c, fullscreen) ) {
++		else*/ if( screen->open(3*default_width_c, 3*default_height_c, fullscreen) ) {
  			scale_width = scale_height = 3.0f;
  			LOG("scale 3x\n");
  		}
-@@ -3636,7 +3636,7 @@
- }
- 
- //bool quit = false;
--bool debugwindow = false;
-+bool debugwindow = true;
- 
- void Game::requestQuit(bool force_quit) {
-     if( !state_changed ) {
-@@ -5243,7 +5243,7 @@
- 	debugwindow = true;
+@@ -5250,8 +5250,8 @@
+ #ifdef _DEBUG
+ 	fullscreen = false;
  #endif
+-	//debugwindow = true;
+-	//fullscreen = false;
++	debugwindow = true;
++	fullscreen = false;
  
--	bool fullscreen = true;
-+	bool fullscreen = false;
- #if defined(__amigaos4__) || defined(AROS) || defined(__MORPHOS__)
- 	fullscreen = false; // run in windowed mode due to reported performance problems in fullscreen mode on AmigaOS 4; also randomly hangs on AROS in fullscreen mode; also included MorphOS just to be safe
- #endif
+ #if !defined(__ANDROID__)
+     // n.b., crashes when run on Galaxy Nexus (even though fine in the emulator)
