@@ -1,5 +1,5 @@
---- source/Makefile	2018-05-30 09:53:17.246525759 +0200
-+++ build/Makefile	2018-05-30 09:58:59.698502251 +0200
+--- source/Makefile	2018-05-28 10:13:03.737049078 +0200
++++ build/Makefile	2018-05-28 11:23:29.808994973 +0200
 @@ -1,13 +1,14 @@
 -CC=g++
 +CC=$(CPPHOST)
@@ -12,14 +12,14 @@
 -LINKPATH=`sdl2-config --libs` -L/usr/X11R6/lib/ -L/usr/lib
 +INC=$(CPPFLAGS)
 +LINKPATH=$(LDFLAGS)
-+GAMEPATH=/games/gigalomania
++GAMEPATH="/games/gigalomania"
  
 -LIBS=-lSDL2_image -lSDL2_mixer
 +LIBS=-lSDL_mixer -lSDL_image -ljpeg -lpng -lSDL -lorbital -lz
  
  all: $(APP)
  
-@@ -19,69 +20,17 @@
+@@ -19,69 +20,16 @@
  
  # REMEMBER to update debian/dirs if the system directories that we use are changed!!!
  install: $(APP)
@@ -37,14 +37,14 @@
 -	# needed for DESTDIR option:
 -	mkdir -p $(DESTDIR)/usr/share/pixmaps
 -	cp gigalomania64.png $(DESTDIR)/usr/share/pixmaps/
+-# REMEMBER to update debian/dirs if the system directories that we use are changed!!!
 +	mkdir -p $(DESTDIR)$(GAMEPATH) # -p so we don't fail if folder already exists
 +	cp $(APP) $(DESTDIR)$(GAMEPATH)
 +	cp readme.html $(DESTDIR)$(GAMEPATH)
-+	cp -a gfx/ $(DESTDIR)$(GAMEPATH) # -a need to copy permissions etc
++	cp -a gfx/ $(DESTDIR)$(GAMEPATH)
 +	cp -a islands/ $(DESTDIR)$(GAMEPATH)
 +	cp -a music/ $(DESTDIR)$(GAMEPATH)
 +	cp -a sound/ $(DESTDIR)$(GAMEPATH)
- # REMEMBER to update debian/dirs if the system directories that we use are changed!!!
  
  uninstall:
 -	rm -rf $(DESTDIR)/opt/gigalomania # -f so we don't fail if folder doesn't exist
@@ -93,7 +93,7 @@
 -	rm -f $(DESTDIR)/usr/share/applications/gigalomania_maemo.desktop
 -	rm -f $(DESTDIR)/usr/share/icons/hicolor/48x48/apps/gigalomania48.png
 -	rm -f $(DESTDIR)/usr/bin/gigalomania_mobile.sh
-+	rm -rf $(DESTDIR)$(GAMEPATH) # -f so we don't fail if folder doesn't exist
++	rm -rf $(DESTDIR)$(GAMEPATH)
  
  clean:
  	rm -rf *.o

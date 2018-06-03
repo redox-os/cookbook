@@ -1,5 +1,5 @@
---- source/game.cpp	2018-06-01 01:19:04.411895062 +0200
-+++ build/game.cpp	2018-06-01 01:25:12.009009699 +0200
+--- source/game.cpp	2018-06-03 15:09:51.347317698 +0200
++++ build/game.cpp	2018-06-03 15:30:03.180235396 +0200
 @@ -2942,11 +2942,11 @@
  		//user_width = 1184;
  		//user_height = 720;
@@ -42,14 +42,21 @@
  			scale_width = scale_height = 3.0f;
  			LOG("scale 3x\n");
  		}
-@@ -5250,8 +5250,8 @@
- #ifdef _DEBUG
- 	fullscreen = false;
- #endif
--	//debugwindow = true;
--	//fullscreen = false;
-+	debugwindow = true;
-+	fullscreen = false;
+@@ -3636,7 +3636,7 @@
+ }
  
- #if !defined(__ANDROID__)
-     // n.b., crashes when run on Galaxy Nexus (even though fine in the emulator)
+ //bool quit = false;
+-bool debugwindow = false;
++bool debugwindow = true;
+ 
+ void Game::requestQuit(bool force_quit) {
+     if( !state_changed ) {
+@@ -5243,7 +5243,7 @@
+ 	debugwindow = true;
+ #endif
+ 
+-	bool fullscreen = true;
++	bool fullscreen = false;
+ #if defined(__amigaos4__) || defined(AROS) || defined(__MORPHOS__)
+ 	fullscreen = false; // run in windowed mode due to reported performance problems in fullscreen mode on AmigaOS 4; also randomly hangs on AROS in fullscreen mode; also included MorphOS just to be safe
+ #endif
