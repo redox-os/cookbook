@@ -544,8 +544,66 @@ fi
     Ok(stage_dir)
 }
 
-fn package(recipe_dir: &Path, stage_dir: &Path, package: &PackageRecipe) -> Result<PathBuf, String> {
+// TODO: Use an error type better than String, for instance anyhow::Error.
+fn copy_recursive(source: &Path, destination: &Path, copy_onto_subdir: Option<bool>) -> Result<(), String> {
+    if source.is_file() && destination.is_file() {
+        fs::copy(source, destination).map_err(|err| format!("failed to copy `{}` => `{}`: {}", source.to_string_lossy(), destination.to_string_lossy(), err))?;
+    } else if destination.is_file() && source.is_dir() {
+        return Err(format!("cannot copy dir `{}` into file `{}`", source.to_string_lossy(), destination.to_string_lossy()));
+    } else if destination.is_dir() || !destination.exists() {
+        fs::create_dir_all(destination).map_err(|err| format!("failed to create destination dir `{}`: {}", destination.to_string_lossy(), err))?;
+
+        if source.is_file() {
+            let target_file_path = destination.join(
+                source
+                    .file_name()
+                    .ok_or_else(|| format!("expected source `{}` to have a filename", source.to_string_lossy()))?
+            );
+            fs::copy(source, target_file_path)
+                .map_err(|err| format!("failed to copy source file `{}` into `{}`: {}", source.to_string_lossy(), destination.to_string_lossy(), err))?;
+        } else {
+            // Source is a directory. If destination ends with a slash, then source shall be copied
+            // as a subdirectory of the destination. If not, it shall be copied to the destination
+            // but with the path name changed.
+            let actual_destination = if copy_onto_subdir.unwrap_or_else(|| destination.ends_with("/")) {
+                destination.join(source.components().next_back().ok_or_else(|| format!("no last component for source `{}`", source.to_string_lossy()))?.as_os_str())
+            } else {
+                destination.to_owned()
+            };
+
+            // Recursively copy all files and directories onto actual_destination.
+            for entry_res in source.read_dir().map_err(|err| format!("failed to read source dir `{}`: {}", source.to_string_lossy(), err))? {
+                let entry = entry_res.map_err(|err| format!("failed to read dir entry from source `{}`: {}", source.to_string_lossy(), err))?;
+                let path = entry.path();
+
+                copy_recursive(&path, &actual_destination, Some(true))
+                    .map_err(|err| format!("failed to copy entry `{}` into `{}`: {}", path.to_string_lossy(), actual_destination.to_string_lossy(), err))?;
+            }
+        }
+
+    } else {
+        unreachable!();
+    }
+
+    Ok(())
+}
+
+fn package(recipe_dir: &Path, source_dir: &Path, stage_dir: &Path, package: &PackageRecipe) -> Result<PathBuf, String> {
     //TODO: metadata like dependencies, name, and version
+
+    for (source_suffix, destination_suffix) in package.copy_paths.iter() {
+        let source_path = source_dir.join(source_suffix);
+        let destination_path = stage_dir.join(destination_suffix);
+
+        if !source_path.exists() {
+            eprintln!("warning: skipping the copy_path `{}` => `{}` because the source did not exist", source_path.to_string_lossy(), destination_path.to_string_lossy());
+            continue;
+        }
+
+        if let Err(error) = copy_recursive(&source_path, &destination_path, None) {
+            eprintln!("failed to copy `{}` => `{}`: {}", source_path.to_string_lossy(), destination_path.to_string_lossy(), error);
+        }
+    }
 
     let secret_path = "build/secret.key";
     let public_path = "build/public.key";
@@ -596,7 +654,7 @@ fn cook(recipe_dir: &Path, recipe: &Recipe, fetch_only: bool) -> Result<(), Stri
         err
     ))?;
 
-    let package_file = package(&recipe_dir, &stage_dir, &recipe.package).map_err(|err| format!(
+    let package_file = package(&recipe_dir, &source_dir, &stage_dir, &recipe.package).map_err(|err| format!(
         "failed to package: {}",
         err
     ))?;

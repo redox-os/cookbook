@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 /// Specifies how to download the source for a recipe
@@ -63,6 +65,8 @@ pub struct BuildRecipe {
 pub struct PackageRecipe {
     #[serde(default)]
     pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub copy_paths: HashMap<String, String>,
 }
 
 /// Everything required to build a Redox package
@@ -80,6 +84,8 @@ pub struct Recipe {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     #[test]
     fn git_cargo_recipe() {
         use crate::recipe::{Recipe, SourceRecipe, BuildKind, BuildRecipe, PackageRecipe};
@@ -107,6 +113,7 @@ mod tests {
             },
             package: PackageRecipe {
                 dependencies: Vec::new(),
+                copy_paths: HashMap::new(),
             },
         });
     }
@@ -141,6 +148,7 @@ mod tests {
             },
             package: PackageRecipe {
                 dependencies: Vec::new(),
+                copy_paths: HashMap::new(),
             },
         });
     }
