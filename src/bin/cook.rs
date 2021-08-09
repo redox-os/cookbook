@@ -203,7 +203,7 @@ fn fetch(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result<PathBuf, St
                 run_command(command)?;
             }
 
-            if let Some(upstream) = upstream {
+            if let Some(_upstream) = upstream {
                 //TODO: set upstream URL
                 // git remote set-url upstream "$GIT_UPSTREAM" &> /dev/null ||
                 // git remote add upstream "$GIT_UPSTREAM"
@@ -544,7 +544,7 @@ fi
     Ok(stage_dir)
 }
 
-fn package(recipe_dir: &Path, stage_dir: &Path, package: &PackageRecipe) -> Result<PathBuf, String> {
+fn package(recipe_dir: &Path, stage_dir: &Path, _package: &PackageRecipe) -> Result<PathBuf, String> {
     //TODO: metadata like dependencies, name, and version
 
     let secret_path = "build/secret.key";
@@ -596,7 +596,7 @@ fn cook(recipe_dir: &Path, recipe: &Recipe, fetch_only: bool) -> Result<(), Stri
         err
     ))?;
 
-    let package_file = package(&recipe_dir, &stage_dir, &recipe.package).map_err(|err| format!(
+    let _package_file = package(&recipe_dir, &stage_dir, &recipe.package).map_err(|err| format!(
         "failed to package: {}",
         err
     ))?;

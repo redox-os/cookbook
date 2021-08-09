@@ -312,7 +312,7 @@ function op {
             fi
             if [ "$skip" -eq "0" ]
             then
-                cargo config package.version | tr -d '"'
+                cargo-config config package.version | tr -d '"'
             fi
             popd > /dev/null
             ;;
