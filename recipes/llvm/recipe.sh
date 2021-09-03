@@ -25,7 +25,7 @@ function recipe_build {
         -DCMAKE_AR="$(which "${AR}")"
         -DCMAKE_BUILD_TYPE=Release
         -DCMAKE_CROSSCOMPILING=True
-        -DCMAKE_CXX_FLAGS="--std=gnu++11"
+        -DCMAKE_CXX_FLAGS="--std=gnu++11 -Wno-dev -I$(printf "%q" "$sysroot/include")"
         -DCMAKE_EXE_LINKER_FLAGS="-static"
         -DCMAKE_RANLIB="$(which "${RANLIB}")"
         -DCMAKE_INSTALL_PREFIX="/"
@@ -57,9 +57,6 @@ function recipe_build {
         -DLLVM_TOOL_LTO_BUILD=Off
         -DPYTHON_EXECUTABLE="/usr/bin/python2"
         -DUNIX=1
-        -target="$HOST"
-        -I"$sysroot/include"
-        -Wno-dev
     )
     set -x
     cmake "${CMAKE_ARGS[@]}" "$source"
