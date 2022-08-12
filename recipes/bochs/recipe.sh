@@ -1,23 +1,13 @@
 VERSION=2.7
-#TAR=
+GIT=https://gitlab.redox-os.org/enygmator/bochs.git
+#BRANCH=
 
-#temporary: source BOCHS source path
-BOCHS_PATH=$ROOT/../../redox_apps/bochs/bochs
+#BOCHS source path for local development
+# $ROOT is `redox/cookbook`
+#BOCHS_PATH=$ROOT/../../redox_apps/bochs/bochs
 
 #Dependencies of this build on other packages available in Redox OS
-#BUILD_DEPENDS=(curl glib libiconv libjpeg libpng pcre pixman sdl sdl2 zlib liborbital nghttp2 openssl gettext)
 BUILD_DEPENDS=(zlib mesa liborbital sdl sdl2)
-
-#this function is run if source folder doesn't exist
-function recipe_fetch {
-    #TODO: Temporarily use direct path to BOCHS directory, instead of cloning from git or downloading TAR from personal git
-
-    #temporarily disabling copying, since `configure` uses VPATH (separate build tree)
-    mkdir source
-
-    #Since we are copying, we skip the download of TAR
-    skip=1
-}
 
 #this function is run if `build` folder doesn't exist
 function recipe_prepare {
@@ -51,7 +41,7 @@ function recipe_build {
     # sdl and sdl2 are mutually exclusive
     # es1370 is the sound card - disabled
 
-    $BOCHS_PATH/configure \
+    ../source/bochs/configure \
         --prefix="/" \
         \
         --build="${BUILD}" \
@@ -75,17 +65,8 @@ function recipe_build {
         --with-nogui \
         --enable-static=yes \
         --with-sdl2 \
-    #    --with-sdl \
-    #    --enable-es1370 \
-    #    #--enable-e1000 \
-    #    #--enable-ne2000 \
-
-
-    echo -e "\e[1;33;44m CONFIGURED BOCHS \e[0m"
 
     "$REDOX_MAKE" -j"$($NPROC)"
-
-    echo -e "\e[1;33;44m MADE BOCHS \e[0m"
 
     skip=1
 }
@@ -103,9 +84,8 @@ function recipe_clean {
 function recipe_stage {
 
     dest="$(realpath $1)"
-    "$REDOX_MAKE" DESTDIR="$dest" install
 
-    echo -e "\e[1;33;44m INSTALLED BOCHS \e[0m"
+    "$REDOX_MAKE" DESTDIR="$dest" install
 
     skip=1
 }
