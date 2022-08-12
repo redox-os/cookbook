@@ -1,5 +1,5 @@
 VERSION=2.7
-GIT=https://gitlab.redox-os.org/enygmator/bochs.git
+GIT=https://gitlab.redox-os.org/redox-os/bochs.git
 #BRANCH=
 
 #BOCHS source path for local development
