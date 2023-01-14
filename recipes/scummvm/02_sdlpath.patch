@@ -1,0 +1,26 @@
+diff -rup source/configure source-new/configure
+--- source/configure	2022-10-16 13:12:39.000000000 -0700
++++ source-new/configure	2023-01-13 21:19:31.536624673 -0800
+@@ -1402,6 +1402,7 @@ for ac_option in $@; do
+ 	--with-sdl-prefix=*)
+ 		arg=`echo $ac_option | cut -d '=' -f 2`
+ 		_sdlpath="$arg:$arg/bin"
++		_sdlprefix="$arg"
+ 		;;
+ 	--with-freetype2-prefix=*)
+ 		arg=`echo $ac_option | cut -d '=' -f 2`
+@@ -3831,11 +3832,11 @@ fi
+ #
+ if test "$_sdl" = auto ; then
+ 	find_sdlconfig
+-	append_var SDL_CFLAGS "`$_sdlconfig --cflags | sed 's/[[:space:]]*-Dmain=SDL_main//g'`"
++	append_var SDL_CFLAGS "`$_sdlconfig --prefix="$_sdlprefix" --cflags | sed 's/[[:space:]]*-Dmain=SDL_main//g'`"
+ 	if test "$_static_build" = yes ; then
+-		append_var SDL_LIBS "`$_sdlconfig --static-libs`"
++		append_var SDL_LIBS "`$_sdlconfig --prefix="$_sdlprefix" --static-libs`"
+ 	else
+-		append_var SDL_LIBS "`$_sdlconfig --libs`"
++		append_var SDL_LIBS "`$_sdlconfig --prefix="$_sdlprefix" --libs`"
+ 	fi
+ 	_sdlversion=`$_sdlconfig --version`
+ 
