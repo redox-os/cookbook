@@ -1,6 +1,6 @@
-VERSION=2.0.0
+VERSION=2.7.0
 TAR=https://downloads.scummvm.org/frs/scummvm/$VERSION/scummvm-$VERSION.tar.xz
-TAR_SHA256=9784418d555ba75822d229514a05cf226b8ce1a751eec425432e6b7e128fca60
+TAR_SHA256=444b1ffd61774fe867824e57bb3033c9998ffa8a4ed3a13246b01611d5cf9993
 BUILD_DEPENDS=(sdl liborbital freetype zlib libpng)
 
 function recipe_version {
@@ -9,7 +9,6 @@ function recipe_version {
 }
 
 function recipe_build {
-    wget -O config.sub "https://gitlab.redox-os.org/redox-os/gnu-config/-/raw/master/config.sub?inline=false"
     sysroot="$(realpath ../sysroot)"
     export LDFLAGS="-static"
     ./configure \

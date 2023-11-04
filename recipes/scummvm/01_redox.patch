@@ -1,24 +1,12 @@
-diff -rupNw source-original/common/stream.cpp source/common/stream.cpp
---- source-original/common/stream.cpp	2017-12-08 23:21:10.000000000 +0100
-+++ source/common/stream.cpp	2018-12-06 02:01:50.454108198 +0100
-@@ -95,7 +95,7 @@ bool MemoryReadStream::seek(int32 offs,
- 		break;
- 	}
- 	// Post-Condition
--	assert(_pos <= _size);
-+	//assert(_pos <= _size);
- 
- 	// Reset end-of-stream flag on a successful seek
- 	_eos = false;
-diff -rupNw source-original/configure source/configure
---- source-original/configure	2017-12-08 23:21:13.000000000 +0100
-+++ source/configure	2018-12-06 02:01:50.458108239 +0100
-@@ -3610,7 +3610,7 @@ case $_host_os in
- 	amigaos* | cygwin* | dreamcast | ds | gamecube | mingw* | n64 | ps2 | ps3 | psp2 | psp | wii | wince)
+diff -rup source/configure source-new/configure
+--- source/configure	2023-02-13 14:19:22.000000000 -0800
++++ source-new/configure	2023-03-20 12:38:42.192818462 -0700
+@@ -4177,7 +4177,7 @@ case $_host_os in
+ 	amigaos* | dreamcast | ds | gamecube | kolibrios | mingw* | morphos | n64 | ps3 | psp2 | psp | riscos | wii)
  		_posix=no
  		;;
--	3ds | android | androidsdl | beos* | bsd* | darwin* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | riscos | solaris* | sunos* | uclinux* | webos)
-+	3ds | android | androidsdl | beos* | bsd* | darwin* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | riscos | redox* | solaris* | sunos* | uclinux* | webos)
+-	3ds | android | beos* | bsd* | cygwin* | darwin* | dragonfly* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | serenity* | solaris* | sunos* | switch | uclinux*)
++	3ds | android | beos* | bsd* | cygwin* | darwin* | dragonfly* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | redox* | serenity* | solaris* | sunos* | switch | uclinux*)
  		_posix=yes
  		;;
  	os2-emx*)
