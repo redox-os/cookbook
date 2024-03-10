@@ -2,4 +2,15 @@
 [source]
 tar = "https://dlcdn.apache.org//apr/apr-1.7.4.tar.bz2"
 [build]
-template = "configure"
+template = "custom"
+script = """
+COOKBOOK_CONFIGURE_FLAGS+=(
+    ac_cv_file__dev_zero=yes
+    apr_cv_process_shared_works=yes
+    apr_cv_mutex_robust_shared=no
+    apr_cv_tcp_nodelay_with_cork=yes
+)
+cookbook_configure
+"""
+
+
