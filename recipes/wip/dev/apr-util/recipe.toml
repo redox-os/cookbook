@@ -1,4 +1,4 @@
-#TODO make apr work
+#TODO compiled but not tested
 [source]
 tar = "https://dlcdn.apache.org//apr/apr-util-1.6.3.tar.bz2"
 [build]
@@ -7,8 +7,10 @@ dependencies = [
     "apr",
 ]
 script = """
+sed "s#/build-1#${COOKBOOK_SYSROOT}/build-1#g" ${COOKBOOK_SYSROOT}/build-1/apr_rules.mk > ${COOKBOOK_SYSROOT}/build-1/apr_rules2.mk
+mv ${COOKBOOK_SYSROOT}/build-1/apr_rules2.mk ${COOKBOOK_SYSROOT}/build-1/apr_rules.mk
 COOKBOOK_CONFIGURE_FLAGS+=(
-    --with-apr
+    --with-apr=${COOKBOOK_SYSROOT}
 )
 cookbook_configure
 """
