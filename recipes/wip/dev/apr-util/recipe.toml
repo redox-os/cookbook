@@ -7,8 +7,8 @@ dependencies = [
     "apr",
 ]
 script = """
-sed "s#/build-1#${COOKBOOK_SYSROOT}/build-1#g" ${COOKBOOK_SYSROOT}/build-1/apr_rules.mk > ${COOKBOOK_SYSROOT}/build-1/apr_rules2.mk
-mv ${COOKBOOK_SYSROOT}/build-1/apr_rules2.mk ${COOKBOOK_SYSROOT}/build-1/apr_rules.mk
+sed "s#/build-1#${COOKBOOK_SYSROOT}/build-1#g" "${COOKBOOK_SYSROOT}/build-1/apr_rules.mk" > "${COOKBOOK_SYSROOT}/build-1/apr_rules2.mk"
+mv "${COOKBOOK_SYSROOT}/build-1/apr_rules2.mk" "${COOKBOOK_SYSROOT}/build-1/apr_rules.mk"
 COOKBOOK_CONFIGURE_FLAGS+=(
     --with-apr=${COOKBOOK_SYSROOT}
 )
