@@ -34,7 +34,7 @@ function recipe_build {
         --enable-shared \
         --disable-dlopen \
         --disable-nls \
-        --enable-languages=c,c++ \
+        --enable-languages=c,c++,go \
         --enable-threads=posix
     "$REDOX_MAKE" -j "$(nproc)" all-gcc all-target-libgcc all-target-libstdc++-v3
     skip=1
