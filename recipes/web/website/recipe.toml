@@ -5,5 +5,5 @@ template = "custom"
 script = """
 ./hugo.sh
 mkdir -pv "${COOKBOOK_STAGE}"/usr/share/website
-cp -rv "${COOKBOOK_BUILD}"/build/content/public/* "${COOKBOOK_STAGE}"/usr/share/website
+cp -rv "${COOKBOOK_BUILD}"/build/public/* "${COOKBOOK_STAGE}"/usr/share/website
 """
