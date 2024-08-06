@@ -1,0 +1,14 @@
+[source]
+tar = "https://ftp.gnu.org/gnu/patch/patch-2.7.6.tar.xz"
+blake3 = "d46d14c12aa4ea51e356bf92091c368fd871e1d770b94bc29027886737aecd5f"
+patches = [
+    "01-no-rlimit.patch",
+    "02-no-chown.patch",
+]
+[build]
+template = "custom"
+script = """
+wget -O build-aux/config.sub "https://gitlab.redox-os.org/redox-os/gnu-config/-/raw/master/config.sub?inline=false"
+autoreconf
+cookbook_configure
+"""

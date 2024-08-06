@@ -1,0 +1,22 @@
+[source]
+git = "https://gitlab.redox-os.org/redox-os/rust.git"
+branch = "redox-2024-05-11"
+[build]
+template = "custom"
+dependencies = [
+    "llvm18",
+]
+[package]
+dependencies = [
+    "gcc13",
+    "cargo",
+]
+script = """
+unset AR AS CC CXX LD NM OBJCOPY OBJDUMP RANLIB READELF STRIP
+python3 "${COOKBOOK_SOURCE}/x.py" install --config "${COOKBOOK_RECIPE}/config.toml" --jobs $(nproc) --incremental
+"$REDOX_MAKE" clean
+rsync -av --delete "install/" "$1/"
+# Cannot use STRIP because it is unset in recipe_build
+#TODO: rustdoc
+"${HOST}-strip" -v "$1/bin/rustc"
+"""

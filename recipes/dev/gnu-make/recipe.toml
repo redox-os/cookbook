@@ -1,0 +1,15 @@
+[source]
+tar = "https://ftp.gnu.org/gnu/make/make-4.2.1.tar.gz"
+blake3 = "9e0212c186498767c6dfef63b054c6cd19221c49657822155c7c56558edc408e"
+patches = [
+    "make.patch",
+]
+[build]
+template = "custom"
+script = """
+export CFLAGS="-DPOSIX -DNO_ARCHIVES -DNO_OUTPUT_SYNC"
+COOKBOOK_CONFIGURE_FLAGS+=(
+    --without-guile
+)
+cookbook_configure
+"""

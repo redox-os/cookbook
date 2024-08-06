@@ -1,0 +1,35 @@
+[build]
+template = "custom"
+dependencies = [
+    "sdl2-image",
+    "sdl2-mixer",
+    "sdl2-ttf",
+    "sdl2",
+    "liborbital",
+    "llvm18",
+    "mesa",
+    "freetype2",
+    "libjpeg",
+    "libpng",
+    "libogg",
+    "zlib",
+]
+script = """
+cp -rv "${COOKBOOK_RECIPE}/assets" "${COOKBOOK_BUILD}/"
+cp -rv "${COOKBOOK_RECIPE}"/gears.c "${COOKBOOK_BUILD}/"
+set -x
+"${CXX}" -O2 -I "${COOKBOOK_SYSROOT}/include" -L "${COOKBOOK_SYSROOT}/lib" \
+gears.c -o sdl2-gears -static -lSDL2_image -lSDL2_mixer \
+-lSDL2_ttf -lSDL2 -lorbital $("${PKG_CONFIG}" --libs osmesa) \
+-lfreetype -lpng -ljpeg -lvorbisfile -lvorbis -logg -lz
+set +x
+mkdir -pv "${COOKBOOK_STAGE}"/usr/bin
+mkdir -pv "${COOKBOOK_STAGE}/usr/games/sdl2-gears"
+mkdir -pv "${COOKBOOK_STAGE}/usr/games/sdl2-gears/assets"
+cp -v "sdl2-gears" "${COOKBOOK_STAGE}/usr/games/sdl2-gears/sdl2-gears"
+cp -v "assets/image.png" "${COOKBOOK_STAGE}/usr/games/sdl2-gears/assets/image.png"
+cp -v "assets/music.wav" "${COOKBOOK_STAGE}/usr/games/sdl2-gears/assets/music.wav"
+cp -v "assets/font.ttf" "${COOKBOOK_STAGE}/usr/games/sdl2-gears/assets/font.ttf"
+echo "#!/usr/bin/env sh \n /usr/games/sdl2-gears/sdl2-gears" > "${COOKBOOK_STAGE}"/usr/bin/sdl2-gears
+chmod a+x "${COOKBOOK_STAGE}"/usr/bin/sdl2-gears
+"""

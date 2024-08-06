@@ -1,0 +1,31 @@
+[source]
+git = "https://gitlab.redox-os.org/redox-os/binutils-gdb.git"
+branch = "redox-2.41"
+upstream = "https://sourceware.org/git/binutils-gdb.git"
+[build]
+template = "custom"
+dependencies = [
+    "expat",
+    "libgmp",
+    "libmpfr",
+]
+script = """
+    mkdir -p "${COOKBOOK_SYSROOT}/usr"
+    ln -sf "${COOKBOOK_SYSROOT}/include" "${COOKBOOK_SYSROOT}/usr/include"
+    ln -sf "${COOKBOOK_SYSROOT}/lib" "${COOKBOOK_SYSROOT}/usr/lib"
+    export CPPFLAGS="-I${COOKBOOK_SYSROOT}/include -pie -fPIC -g"
+    export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib --static -g"
+COOKBOOK_CONFIGURE_FLAGS+=(
+    --with-sysroot=/ \
+    --with-build-sysroot="${COOKBOOK_SYSROOT}" \
+    --enable-gdb \
+    --with-expat \
+    --with-multilib \
+    --with-interwork \
+    --enable-targets="${TARGET}" \
+    --disable-lto \
+    --disable-nls \
+    --disable-werror
+)
+cookbook_configure
+"""
