@@ -1,18 +1,23 @@
-VERSION=1.20.6
-TAR=https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-$VERSION.tar.xz
-BUILD_DEPENDS=(gettext glib libffi libiconv pcre zlib)
-
-function recipe_version {
-    echo "$VERSION"
-    skip=1
-}
-
-function recipe_build {
-    sysroot="$(realpath ../sysroot)"
+[source]
+tar = "https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-1.20.6.tar.xz"
+blake3 = "d96a7fd8bb9bec309bc40ccafdbac3bd4d11d06a9be41c38337cea02deaea95d"
+patches = [
+    "redox.patch",
+]
+[build]
+template = "custom"
+dependencies = [
+    "gettext",
+    "glib",
+    "libffi",
+    "libiconv",
+    "pcre",
+    "zlib",
+]
+script = """
     export GLIB_GENMARSHAL="$(which glib-genmarshal)"
     export GLIB_MKENUMS="$(which glib-mkenums)"
     export LDFLAGS="-static"
-
     # TODO: Fix this annoying shite
     echo "[binaries]" > cross_file.txt
     echo "c = '${CC}'" >> cross_file.txt
@@ -28,10 +33,9 @@ function recipe_build {
 	echo "endian = 'little'" >> cross_file.txt
 
 	echo "[paths]" >> cross_file.txt
-	echo "prefix = '${sysroot}'" >> cross_file.txt
+	echo "prefix = '${COOKBOOK_SYSROOT}'" >> cross_file.txt
 	echo "libdir = 'lib'" >> cross_file.txt
 	echo "bindir = 'bin'" >> cross_file.txt
-
 	unset AR
 	unset AS
 	unset CC
@@ -45,28 +49,17 @@ function recipe_build {
 	unset READELF
 	unset STRIP
 
-	meson . _build \
-	    --cross-file cross_file.txt \
-	    --buildtype release \
-	    --strip \
-	    -Ddefault_library=static \
-	    -Dprefix=/ \
-	    -Dlibdir=lib \
-        -Dbenchmarks=disabled \
-        -Dexamples=disabled \
-        -Dtests=disabled
-	ninja -C _build -v
-    skip=1
-}
-
-function recipe_clean {
-    "$REDOX_MAKE" clean
-    skip=1
-}
-
-function recipe_stage {
-	dest="$(realpath $1)"
-	DESTDIR="$dest" ninja -C _build -v install
-	rm -f "$dest/lib/"*.la
-    skip=1
-}
+meson . _build \
+	--cross-file cross_file.txt \
+	--buildtype release \
+	--strip \
+	-Ddefault_library=static \
+	-Dprefix=/ \
+	-Dlibdir=lib \
+    -Dbenchmarks=disabled \
+    -Dexamples=disabled \
+    -Dtests=disabled
+ninja -C _build -v
+DESTDIR="${COOKBOOK_STAGE}" ninja -C _build -v install
+rm -f "${COOKBOOK_STAGE}/lib/"*.la
+"""

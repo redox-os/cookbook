@@ -1,0 +1,33 @@
+[source]
+tar = "https://downloads.sourceforge.net/project/prboom/prboom%20stable/2.5.0/prboom-2.5.0.tar.gz"
+blake3 = "24c1b9b5aa15fd73e59162055f2c6d8faa82759b76ddfca9828cd2a5c8dc6b2a"
+patches = [
+    "01_redox.patch",
+]
+[build]
+template = "custom"
+dependencies = [
+    "sdl1",
+    "liborbital",
+    "sdl1-mixer",
+    "libogg",
+    "libvorbis",
+]
+script = """
+export MIXER_LIBS="-lSDL_mixer -lvorbisfile -lvorbis -logg"
+autoreconf -if
+wget -O autotools/config.sub "https://gitlab.redox-os.org/redox-os/gnu-config/-/raw/master/config.sub?inline=false"
+COOKBOOK_CONFIGURE_FLAGS+=(
+    --disable-cpu-opt
+    --disable-i386-asm
+    --disable-gl
+    --disable-sdltest
+    --without-net
+    --with-sdl-prefix="${COOKBOOK_SYSROOT}"
+    ac_cv_lib_SDL_mixer_Mix_OpenAudio=yes
+)
+cookbook_configure
+mkdir -pv "${COOKBOOK_STAGE}"/usr/bin
+echo "#!/usr/bin/env sh \n /usr/games/prboom/prboom" > "${COOKBOOK_STAGE}"/usr/bin/prboom
+chmod a+x "${COOKBOOK_STAGE}"/usr/bin/prboom
+"""

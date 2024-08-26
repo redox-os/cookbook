@@ -1,0 +1,27 @@
+[source]
+tar = "https://ftp.nluug.nl/pub/vim/unix/vim-8.2.tar.bz2"
+blake3 = "a84b65d6fddd7adc07b862c934aa6ae450bf86ae25cf1e3a8409fccd237efc62"
+patches = [
+    "vim.patch",
+]
+[build]
+template = "custom"
+dependencies = [
+    "ncurses",
+    "terminfo",
+]
+script = """
+    export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib -static"
+    export CPPFLAGS="-I${COOKBOOK_SYSROOT}/include"
+    export vim_cv_toupper_broken=no
+    export vim_cv_tgetent=zero
+    export vim_cv_terminfo=yes
+    export vim_cv_tty_group=world
+    export vim_cv_getcwd_broken=no
+    export vim_cv_stat_ignores_slash=yes
+    export vim_cv_memmove_handles_overlap=yes
+COOKBOOK_CONFIGURE_FLAGS+=(
+    --with-tlib=ncurses
+)
+cookbook_configure
+"""

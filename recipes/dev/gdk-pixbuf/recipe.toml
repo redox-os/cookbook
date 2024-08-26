@@ -1,14 +1,20 @@
-VERSION="2.38.1"
-TAR="https://ftp.gnome.org/pub/gnome/sources/gdk-pixbuf/${VERSION%.*}/gdk-pixbuf-${VERSION}.tar.xz"
-BUILD_DEPENDS=(gettext glib libffi libiconv libjpeg libpng pcre shared-mime-info zlib)
-
-function recipe_version {
-    echo "$VERSION"
-    skip=1
-}
-
-function recipe_build {
-    sysroot="$(realpath ../sysroot)"
+[source]
+tar = "https://ftp.gnome.org/pub/gnome/sources/gdk-pixbuf/2.38/gdk-pixbuf-2.38.1.tar.xz"
+blake3 = "131cf94d458bf353e42993714477e746fe3f1e4d39cb4acd4c82a5d5e341679b"
+[build]
+template = "custom"
+dependencies = [
+    "gettext",
+    "glib",
+    "libffi",
+    "libiconv",
+    "libjpeg",
+    "libpng",
+    "pcre",
+    "shared-mime-info",
+    "zlib",
+]
+script = """
     export LDFLAGS="-static"
 
     # TODO: Fix this annoying shite
@@ -26,7 +32,7 @@ function recipe_build {
     echo "endian = 'little'" >> cross_file.txt
 
     echo "[paths]" >> cross_file.txt
-    echo "prefix = '${sysroot}'" >> cross_file.txt
+    echo "prefix = '${COOKBOOK_SYSROOT}'" >> cross_file.txt
     echo "libdir = 'lib'" >> cross_file.txt
     echo "bindir = 'bin'" >> cross_file.txt
 
@@ -43,28 +49,17 @@ function recipe_build {
     unset READELF
     unset STRIP
 
-    meson . _build \
-        --cross-file cross_file.txt \
-        --buildtype release \
-        --strip \
-        -Ddefault_library=static \
-        -Dprefix=/ \
-        -Dlibdir=lib \
-        -Dbuiltin_loaders=all \
-        -Dgir=false \
-        -Dx11=false
-    ninja -C _build -v
-    skip=1
-}
-
-function recipe_clean {
-    "$REDOX_MAKE" clean
-    skip=1
-}
-
-function recipe_stage {
-    dest="$(realpath $1)"
-    DESTDIR="$dest" ninja -C _build -v install
-    rm -f "$dest/lib/"*.la
-    skip=1
-}
+meson . _build \
+    --cross-file cross_file.txt \
+    --buildtype release \
+    --strip \
+    -Ddefault_library=static \
+    -Dprefix=/ \
+    -Dlibdir=lib \
+    -Dbuiltin_loaders=all \
+    -Dgir=false \
+    -Dx11=false
+ninja -C _build -v
+DESTDIR="${COOKBOOK_STAGE}" ninja -C _build -v install
+rm -f "${COOKBOOK_STAGE}/lib/"*.la
+"""
