@@ -5,5 +5,5 @@ tar = "https://launchpad.net/libvterm/trunk/v0.3/+download/libvterm-0.3.3.tar.gz
 template = "custom"
 script = """
 rsync -av --delete "${COOKBOOK_SOURCE}/" ./
-make CFLAGS=-static && make install
+make CFLAGS=-static PREFIX=${COOKBOOK_STAGE} && make install PREFIX=${COOKBOOK_STAGE}
 """
