@@ -10,6 +10,7 @@ rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 make BUILDMODE=static \
     TARGET_SYS=Other \
     CROSS=${TARGET}- \
+    XCFLAGS=-DLUAJIT_SECURITY_PRNG=0 \
     PREFIX=${COOKBOOK_STAGE} \
 && make install PREFIX=${COOKBOOK_STAGE}
 """
