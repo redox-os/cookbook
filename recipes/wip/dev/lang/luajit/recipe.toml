@@ -1,6 +1,6 @@
-#TODO missing script for "make", see https://luajit.org/install.html
+#TODO build, but still untested, see https://luajit.org/install.html
 [source]
-#tar = "https://luajit.org/download/LuaJIT-2.1.0-beta3.tar.gz"
+# luajit is only available through git now
 git = "https://luajit.org/git/luajit.git"
 
 [build]
