@@ -1,0 +1,9 @@
+#TODO missing cross compile flags/env vars
+[source]
+tar = "https://www.leonerd.org.uk/code/libtermkey/libtermkey-0.22.tar.gz"
+[build]
+template = "custom"
+script = """
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
+make CFLAGS="-static -D_POSIX_VDISABLE=1" PREFIX=${COOKBOOK_STAGE} && make install PREFIX=${COOKBOOK_STAGE}
+"""

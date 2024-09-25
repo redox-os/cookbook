@@ -1,5 +1,12 @@
-#TODO missing script for building, see https://github.com/leonerd/libtickit
+#TODO missing cross compile flags/env vars
 [source]
 tar = "https://www.leonerd.org.uk/code/libtickit/libtickit-0.4.3.tar.gz"
 [build]
+dependencies = [
+    "libtermkey"
+]
 template = "custom"
+script = """
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
+make CFLAGS=-static PREFIX=${COOKBOOK_STAGE} && make install PREFIX=${COOKBOOK_STAGE}
+"""
