@@ -2,10 +2,10 @@
 [source]
 #tar = "https://luajit.org/download/LuaJIT-2.1.0-beta3.tar.gz"
 git = "https://luajit.org/git/luajit.git"
+
 [build]
 template = "custom"
 script = """
-cp -r ${COOKBOOK_SOURCE} ${COOKBOOK_BUILD}
-cd ${COOKBOOK_BUILD}/source
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 make BUILDMODE=static PREFIX=${COOKBOOK_STAGE} && make install PREFIX=${COOKBOOK_STAGE}
 """
