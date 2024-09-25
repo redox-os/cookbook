@@ -9,7 +9,7 @@ script = """
 rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 make BUILDMODE=static \
     TARGET_SYS=Other \
-    CROSS=${TARGET} \
+    CROSS=${TARGET}- \
     PREFIX=${COOKBOOK_STAGE} \
 && make install PREFIX=${COOKBOOK_STAGE}
 """
