@@ -7,5 +7,9 @@ git = "https://luajit.org/git/luajit.git"
 template = "custom"
 script = """
 rsync -av --delete "${COOKBOOK_SOURCE}/" ./
-make BUILDMODE=static PREFIX=${COOKBOOK_STAGE} && make install PREFIX=${COOKBOOK_STAGE}
+make BUILDMODE=static\
+    TARGET_SYS=Other\
+    CROSS=${TARGET}\
+    PREFIX=${COOKBOOK_STAGE}\
+&& make install PREFIX=${COOKBOOK_STAGE}
 """
