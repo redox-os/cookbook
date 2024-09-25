@@ -5,12 +5,13 @@ git = "https://luajit.org/git/luajit.git"
 
 [build]
 template = "custom"
+# LUAJIT_OS=5 means Posix
 script = """
 rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 make BUILDMODE=static \
     TARGET_SYS=Other \
     CROSS=${TARGET}- \
-    XCFLAGS=-DLUAJIT_SECURITY_PRNG=0 \
+    XCFLAGS="-DLUAJIT_SECURITY_PRNG=0 -DLUAJIT_OS=5" \
     PREFIX=${COOKBOOK_STAGE} \
 && make install PREFIX=${COOKBOOK_STAGE}
 """
