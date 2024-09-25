@@ -2,8 +2,13 @@
 [source]
 tar = "https://www.leonerd.org.uk/code/libtermkey/libtermkey-0.22.tar.gz"
 [build]
+dependencies = [
+    "libncurses"
+]
 template = "custom"
+# don't need to build the demo
 script = """
 rsync -av --delete "${COOKBOOK_SOURCE}/" ./
-make CFLAGS="-static -D_POSIX_VDISABLE=1" PREFIX=${COOKBOOK_STAGE} && make install PREFIX=${COOKBOOK_STAGE}
+touch demo demo-async
+make CFLAGS="-static -D_POSIX_VDISABLE=1 -I${COOKBOOK_SYSROOT}/include -I${COOKBOOK_SYSROOT}/include/ncurses" PREFIX=${COOKBOOK_STAGE} -o demo -o demo-async && make install PREFIX=${COOKBOOK_STAGE}
 """
