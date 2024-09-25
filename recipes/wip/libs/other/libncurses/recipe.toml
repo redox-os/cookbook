@@ -1,7 +1,10 @@
-#TODO missing cross compile flags/env vars
+#TODO to be tested
 [source]
 tar = "https://ftp.gnu.org/gnu/ncurses/ncurses-6.5.tar.gz"
 [build]
+dependencies = [
+    "relibc"
+]
 template = "custom"
 script = """
 COOKBOOK_CONFIGURE_FLAGS+=(
