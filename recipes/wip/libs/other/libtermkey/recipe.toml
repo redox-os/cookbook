@@ -3,7 +3,7 @@
 tar = "https://www.leonerd.org.uk/code/libtermkey/libtermkey-0.22.tar.gz"
 [build]
 dependencies = [
-    "libncurses"
+    "ncurses"
 ]
 template = "custom"
 # don't need to build the demo

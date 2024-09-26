@@ -12,7 +12,7 @@ dependencies = [
     "libvterm",
     "libtickit",
     "libtermkey",
-    "libncurses",
+    "ncurses",
 ]
 script = """
 COOKBOOK_CONFIGURE="cmake"

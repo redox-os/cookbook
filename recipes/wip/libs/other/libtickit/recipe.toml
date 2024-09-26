@@ -4,7 +4,7 @@ tar = "https://www.leonerd.org.uk/code/libtickit/libtickit-0.4.3.tar.gz"
 [build]
 dependencies = [
     "libtermkey",
-    "libncurses"
+    "ncurses"
 ]
 template = "custom"
 script = """
