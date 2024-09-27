@@ -7,6 +7,8 @@ dependencies = [
 ]
 template = "custom"
 script = """
+mkdir -p ${COOKBOOK_SYSROOT}/include/net
+cp ${COOKBOOK_RECIPE}/if.h ${COOKBOOK_SYSROOT}/include/net/
 COOKBOOK_CONFIGURE="cmake"
 COOKBOOK_CONFIGURE_FLAGS=(
     -DCMAKE_BUILD_TYPE=Release
