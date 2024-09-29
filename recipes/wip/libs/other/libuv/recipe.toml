@@ -1,4 +1,4 @@
-#TODO missing headers such as 'net/if.h' or 'sys/statfs.h'
+#TODO missing headers such as 'sys/statfs.h'
 [source]
 tar = "https://dist.libuv.org/dist/v1.45.0/libuv-v1.45.0.tar.gz"
 [build]
