@@ -11,10 +11,12 @@ dependencies = [
     "libuv",
     "libvterm",
     "libtickit",
+    "libtermkey",
+    "ncurses",
 ]
 script = """
-    COOKBOOK_CONFIGURE="cmake"
-    COOKBOOK_CONFIGURE_FLAGS=(
+COOKBOOK_CONFIGURE="cmake"
+COOKBOOK_CONFIGURE_FLAGS=(
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_CROSSCOMPILING=True
     -DCMAKE_EXE_LINKER_FLAGS="-static"

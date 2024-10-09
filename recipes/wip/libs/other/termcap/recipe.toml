@@ -1,5 +1,15 @@
-#TODO non-sense "permission denied" error
+#TODO non-sense "permission denied" error at the end, but still builds and produces .a file correcly
 [source]
 tar = "https://ftp.gnu.org/gnu/termcap/termcap-1.3.1.tar.gz"
 [build]
-template = "configure"
+template = "custom"
+script = """
+COOKBOOK_CONFIGURE_FLAGS+=(
+--target="${TARGET}"
+--prefix="${COOKBOOK_STAGE}"
+--exec-prefix="${COOKBOOK_STAGE}"
+--program-prefix="${COOKBOOK_STAGE}"
+)
+cookbook_configure
+"""
+

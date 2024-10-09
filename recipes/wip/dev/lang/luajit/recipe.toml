@@ -1,5 +1,17 @@
-#TODO missing script for "make", see https://luajit.org/install.html
+#TODO build, but still untested, see https://luajit.org/install.html
 [source]
-tar = "https://luajit.org/download/LuaJIT-2.1.0-beta3.tar.gz"
+# luajit is only available through git now
+git = "https://luajit.org/git/luajit.git"
+
 [build]
 template = "custom"
+# LUAJIT_OS=5 means Posix
+script = """
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
+make BUILDMODE=static \
+    TARGET_SYS=Other \
+    CROSS=${TARGET}- \
+    XCFLAGS="-DLUAJIT_SECURITY_PRNG=0 -DLUAJIT_OS=5" \
+    PREFIX=${COOKBOOK_STAGE} \
+&& make install PREFIX=${COOKBOOK_STAGE}
+"""
