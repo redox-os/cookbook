@@ -1,5 +1,14 @@
 [source]
 git = "https://gitlab.redox-os.org/redox-os/pkgutils.git"
-
 [build]
-template = "cargo"
+template = "custom"
+script = """
+"${COOKBOOK_CARGO}" build \
+    --manifest-path "${COOKBOOK_SOURCE}/Cargo.toml" \
+    --package "pkg-cli" \
+    --release
+mkdir -pv "${COOKBOOK_STAGE}/bin"
+cp -v \
+    "target/${TARGET}/release/pkg" \
+    "${COOKBOOK_STAGE}/bin/pkg"
+"""
