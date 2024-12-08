@@ -1,0 +1,8 @@
+[source]
+git = "https://gitlab.redox-os.org/redox-os/redox"
+[build]
+template = "custom"
+script = """
+mkdir -pv "${COOKBOOK_STAGE}"/home/user/redox
+cp -rv "${COOKBOOK_SOURCE}"/* "${COOKBOOK_STAGE}"/home/user/redox
+"""
