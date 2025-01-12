@@ -6,7 +6,6 @@ template = "custom"
 dependencies = [
   "base-initfs",
   "bootstrap",
-  "drivers-initfs",
   "redoxfs",
 ]
 script = """
