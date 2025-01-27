@@ -1,9 +1,24 @@
 [source]
-same_as = "../drivers"
+same_as = "../base"
 
 [build]
 template = "custom"
 script = """
+mkdir -pv "${COOKBOOK_STAGE}/usr/bin"
+for package in init logd ramfs randd zerod; do
+    "${COOKBOOK_CARGO}" build \
+        --manifest-path "${COOKBOOK_SOURCE}/${package}/Cargo.toml" \
+        ${build_flags}
+    cp -v \
+        "target/${TARGET}/${build_type}/${package}" \
+        "${COOKBOOK_STAGE}/usr/bin/${package}"
+done
+
+# TODO: symlinks aren't supported by redox-initfs
+#ln -sv zerod "${COOKBOOK_STAGE}/usr/bin/nulld"
+
+cp "${COOKBOOK_STAGE}/usr/bin/zerod" "${COOKBOOK_STAGE}/usr/bin/nulld"
+
 BINS=(
     acpid
     fbbootlogd
@@ -57,7 +72,7 @@ mkdir -pv "${COOKBOOK_STAGE}/bin" "${COOKBOOK_STAGE}/lib/drivers"
 export CARGO_PROFILE_RELEASE_OPT_LEVEL=s
 export CARGO_PROFILE_RELEASE_PANIC=abort
 "${COOKBOOK_CARGO}" build --release \
-    --manifest-path "${COOKBOOK_SOURCE}/Cargo.toml" \
+    --manifest-path "${COOKBOOK_SOURCE}/drivers/Cargo.toml" \
     $(for bin in "${BINS[@]}"; do echo "-p" "${bin}"; done)
 for bin in "${BINS[@]}"
 do
@@ -72,5 +87,5 @@ do
 done
 
 mkdir -pv "${COOKBOOK_STAGE}/etc/pcid"
-cp -v "${COOKBOOK_SOURCE}/initfs.toml" "${COOKBOOK_STAGE}/etc/pcid/initfs.toml"
+cp -v "${COOKBOOK_SOURCE}/drivers/initfs.toml" "${COOKBOOK_STAGE}/etc/pcid/initfs.toml"
 """
