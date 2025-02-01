@@ -1,5 +1,5 @@
 [source]
-git = "https://gitlab.redox-os.org/redox-os/drivers.git"
+git = "https://gitlab.redox-os.org/bjorn3/base.git"
 
 [build]
 template = "custom"
@@ -37,7 +37,7 @@ mkdir -pv "${COOKBOOK_STAGE}/usr/bin" "${COOKBOOK_STAGE}/usr/lib/drivers"
 export CARGO_PROFILE_RELEASE_OPT_LEVEL=s
 export CARGO_PROFILE_RELEASE_PANIC=abort
 "${COOKBOOK_CARGO}" build --release \
-    --manifest-path "${COOKBOOK_SOURCE}/Cargo.toml" \
+    --manifest-path "${COOKBOOK_SOURCE}/drivers/Cargo.toml" \
     $(for bin in "${BINS[@]}"; do echo "-p" "${bin}"; done)
 for bin in "${BINS[@]}"
 do
@@ -49,10 +49,10 @@ do
 done
 
 mkdir -pv "${COOKBOOK_STAGE}/etc/pcid"
-cp -v "${COOKBOOK_SOURCE}/initfs.toml" "${COOKBOOK_STAGE}/etc/pcid/initfs.toml"
+cp -v "${COOKBOOK_SOURCE}/drivers/initfs.toml" "${COOKBOOK_STAGE}/etc/pcid/initfs.toml"
 
 mkdir -pv "${COOKBOOK_STAGE}/etc/pcid.d"
-${FIND} "${COOKBOOK_SOURCE}" -maxdepth 3 -type f -name 'config.toml' | while read conf
+${FIND} "${COOKBOOK_SOURCE}/drivers" -maxdepth 3 -type f -name 'config.toml' | while read conf
 do
     driver="$(basename "$(dirname "$conf")")"
     cp -v "$conf" "${COOKBOOK_STAGE}/etc/pcid.d/$driver.toml"
