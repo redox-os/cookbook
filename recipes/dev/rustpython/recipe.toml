@@ -1,6 +1,7 @@
 [source]
 git = "https://github.com/RustPython/RustPython"
-branch = "redox-release"
+#branch = "redox-release"
+sha="7933edad439203c39cf527f0ff6f508ec0a0f048"
 
 [build]
 dependencies = [
