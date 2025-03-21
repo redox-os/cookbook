@@ -1,11 +1,13 @@
 [source]
 git = "https://github.com/RustPython/RustPython"
-branch = "redox-release"
+#branch = "redox-release"
+rev="0717d5a33146136727ac315deea3f967fc2c00f6"
 
 [build]
 dependencies = [
   "openssl1",
   "zlib",
+  "relibc",
 ]
 template = "custom"
 script = """
@@ -13,7 +15,7 @@ script = """
 export BUILDTIME_RUSTPYTHONPATH=/lib/rustpython
 export OPENSSL_DIR="${COOKBOOK_SYSROOT}"
 export ZLIB_STATIC=1
-cookbook_cargo --features ssl
+
 mkdir -p "${COOKBOOK_STAGE}/lib"
 rsync -aE \
   --exclude 'test/' \
@@ -22,3 +24,5 @@ rsync -aE \
   --exclude '/README.md' \
   "${COOKBOOK_SOURCE}"/Lib/ "${COOKBOOK_STAGE}/lib/rustpython"
 """
+
+#cookbook_cargo --features ssl

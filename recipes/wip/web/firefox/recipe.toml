@@ -20,8 +20,9 @@ dependencies = [
 #    "liborbital",
 #    "libiconv",
 #    "openssl1",
+    "pango",
     "rustpython",
-    "oss"
+    "oss",
 ]
 
 # copy-pasted from configure template
