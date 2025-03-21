@@ -1,9 +1,6 @@
 [source]
 tar = "https://ftp.mozilla.org/pub/firefox/releases/136.0.2/source/firefox-136.0.2.source.tar.xz"
 blake3 = "7d4ab084f537dc9972ca87a81219149027737666f987fc5d3c29721b151708b6"
-#patches = [
-#    "./01_redox.patch"
-#]
 
 [build]
 template = "custom"
@@ -20,7 +17,10 @@ dependencies = [
 #    "liborbital",
 #    "libiconv",
 #    "openssl1",
+    "fribidi",
+    "glib",
     "pango",
+    "pcre",
     "rustpython",
     "oss",
 ]
@@ -83,6 +83,8 @@ shared-deps = [
 #    "nghttp2",
 #    "openssl1",
     "relibc",
+    "pango",
+    "glib"
 #    "zlib",
 ]
 dependencies = [
