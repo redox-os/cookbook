@@ -7,22 +7,6 @@ rev="0717d5a33146136727ac315deea3f967fc2c00f6"
 dependencies = [
   "openssl1",
   "zlib",
-  "relibc",
+  "relibc"
 ]
-template = "custom"
-script = """
-(cd "${COOKBOOK_SOURCE}" && bash scripts/redox/uncomment-cargo.sh && cargo update)
-export BUILDTIME_RUSTPYTHONPATH=/lib/rustpython
-export OPENSSL_DIR="${COOKBOOK_SYSROOT}"
-export ZLIB_STATIC=1
-
-mkdir -p "${COOKBOOK_STAGE}/lib"
-rsync -aE \
-  --exclude 'test/' \
-  --exclude '__pycache__/' \
-  --exclude '*.pyc' \
-  --exclude '/README.md' \
-  "${COOKBOOK_SOURCE}"/Lib/ "${COOKBOOK_STAGE}/lib/rustpython"
-"""
-
-#cookbook_cargo --features ssl
+template = "cargo"
