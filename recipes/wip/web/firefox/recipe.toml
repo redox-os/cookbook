@@ -6,23 +6,26 @@ blake3 = "7d4ab084f537dc9972ca87a81219149027737666f987fc5d3c29721b151708b6"
 template = "custom"
 dependencies = [
 #    "curl",
-#    "expat",
 #    "libjpeg",
-#    "libpng",
 #    "nghttp2",
 #    "openssl1",
 #    "sdl1",
-#    "zlib",
-#    "freetype2",
 #    "liborbital",
 #    "libiconv",
 #    "openssl1",
+    "cairo",
+    "expat",
+    "fontconfig",
     "fribidi",
+    "freetype2",
     "glib",
+    "libpng",
     "pango",
     "pcre",
     "rustpython",
     "oss",
+    "zlib",
+    "xwayland",
 ]
 
 # copy-pasted from configure template
