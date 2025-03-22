@@ -1,0 +1,6 @@
+name=Firefox
+binary=/usr/bin/firefox
+icon=/ui/icons/apps/internet-web-browser.png
+accept=*.html
+author=Firefox
+description=The Browser

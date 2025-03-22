@@ -1,0 +1,26 @@
+--- source/python/mozbuild/mozbuild/configure/constants.py	2025-03-22 17:31:23.000000000 +0100
++++ source/python/mozbuild/mozbuild/configure/constants.py	2025-03-22 18:00:00.000000000 +0100
+@@ -45,6 +45,7 @@
+         "SunOS",
+         "WINNT",
+         "WASI",
++        "Redox",
+     )
+ 
+ 
+@@ -59,6 +60,7 @@
+         "SunOS",
+         "WINNT",
+         "WASI",
++        "Redox",
+     )
+ 
+ 
+@@ -149,6 +151,7 @@
+     "SunOS": "__sun__",
+     "WINNT": "_WIN32 || __CYGWIN__",
+     "WASI": "__wasi__",
++    "Redox": "__redox__",
+ }
+ 
+ assert sorted(kernel_preprocessor_checks.keys()) == sorted(Kernel.POSSIBLE_VALUES)
