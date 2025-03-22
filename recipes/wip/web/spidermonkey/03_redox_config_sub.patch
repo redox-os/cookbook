@@ -1,5 +1,5 @@
---- build/autoconf/config.sub	2025-03-22 17:31:23.488678000 +0100
-+++ build/autoconf/config.sub	2025-03-22 17:31:58.480171168 +0100
+--- source/build/autoconf/config.sub	2025-03-22 17:31:23.488678000 +0100
++++ source/build/autoconf/config.sub	2025-03-22 17:31:58.480171168 +0100
 @@ -153,6 +153,7 @@
  			| os2-emx* \
  			| rtmk-nova* \
