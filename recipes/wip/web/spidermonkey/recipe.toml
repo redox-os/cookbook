@@ -8,6 +8,7 @@ patches = [
     "03_redox_config_sub.patch",
     "04_redox_kernel.patch",
     "05_mozglue.patch",
+    "06_cargo_toml.patch"
 ]
 
 [build]

@@ -4,5 +4,16 @@ ac_add_options --target=x86_64-unknown-redox
 ac_add_options --host=$(gcc -dumpmachine)
 ac_add_options --enable-bootstrap
 
+# https://firefox-source-docs.mozilla.org/build/buildsystem/unified-builds.html
+# necessary to avoid:
+# 0:15.53 In file included from /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/sysroot/usr/include/wchar.h:8,
+# 0:15.53                  from /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/sysroot/usr/include/stdlib.h:6,
+# 0:15.53                  from /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/build/memory/mozalloc/mozalloc.cpp:18,
+# 0:15.53                  from Unified_cpp_memory_mozalloc0.cpp:2:
+# 0:15.53 /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/sysroot/usr/include/bits/wchar.h:12:28: error: redeclaration of C++ built-in type 'wchar_t' [-fpermissive]
+# 0:15.53    12 |     typedef __WCHAR_TYPE__ wchar_t;
+# 0:15.53       |                            ^~~~~~~
+ac_add_options --disable-unified-build
+
 mk_add_options MOZ_MAKE_FLAGS="--trace" 
-#ac_add_options LDFLAGS="-v"
+
