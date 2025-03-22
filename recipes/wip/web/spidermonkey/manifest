@@ -1,0 +1,6 @@
+name=SpiderMonkey
+binary=/usr/bin/spidermonkey
+icon=/ui/icons/apps/internet-web-browser.png
+accept=*.js
+author=SpiderMonkey
+description=The JS Engine
