@@ -12,7 +12,7 @@ if [[ "$BASENAME" == *"x86_64-unknown-redox"* ]]; then
     COMPILER="${BASENAME##*-}"
     
     # Check if we're building a host tool
-    if [[ "$*" == *"host_"* || "$*" == *"nsinstall"* ]]; then
+    if [[ "$*" == *"host_"* || "$*" == *"nsinstall"* || "$*" == *"cargo-host-linker"* ]]; then
         echo "REDIRECTING cross-compiler call to host compiler for host tools" >&2
         # Use the native compiler instead
         HOST_COMPILER="$COMPILER"
