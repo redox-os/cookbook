@@ -8,7 +8,9 @@ patches = [
     "03_redox_config_sub.patch",
     "04_redox_kernel.patch",
     "05_mozglue.patch",
-    "06_cargo_toml.patch"
+    "06_cargo_toml.patch",
+    "07_change_cmath_to_math.patch",
+    "08_remove_std_from_wchar_methods.patch"
 ]
 
 [build]
@@ -42,7 +44,9 @@ script = """
 #TODO: check paths for spaces!
 ls ${COOKBOOK_SYSROOT}/lib
 ls ${COOKBOOK_SYSROOT}/usr/lib
-export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib -L${COOKBOOK_SYSROOT}/usr/lib -lc"
+export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib"
+export CFLAGS="${CFLAGS} -fpermissive"
+export CXXFLAGS="${CXXFLAGS} -fpermissive"
 
 # Set up the compiler wrapper to intercept calls for host tools
 chmod +x "${COOKBOOK_RECIPE}/host-compiler-wrapper.sh"
