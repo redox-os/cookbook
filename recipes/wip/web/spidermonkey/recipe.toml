@@ -41,30 +41,37 @@ dependencies = [
 ]
 
 script = """
+export HOST_CC=$(which gcc)
+export HOST_CXX=$(which g++)
+export HOST_LDFLAGS=-lc
+
+# these flags suffice instead of the crazy hack with host-compiler-wrappers from earlier 
+export MOZ_CARGO_WRAP_HOST_LD="$HOST_CC"
+export MOZ_CARGO_WRAP_HOST_LD_CXX="$HOST_CXX"
+export MOZ_CARGO_WRAP_HOST_LDFLAGS=$LDFLAGS
+
 #TODO: check paths for spaces!
-ls ${COOKBOOK_SYSROOT}/lib
-ls ${COOKBOOK_SYSROOT}/usr/lib
 export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib"
 export CFLAGS="${CFLAGS} -fpermissive"
 export CXXFLAGS="${CXXFLAGS} -fpermissive"
 
 # Set up the compiler wrapper to intercept calls for host tools
-chmod +x "${COOKBOOK_RECIPE}/host-compiler-wrapper.sh"
+#chmod +x "${COOKBOOK_RECIPE}/host-compiler-wrapper.sh"
 
 # Create a temporary directory for our compiler wrappers
-mkdir -p "${COOKBOOK_RECIPE}/host-compiler-wrappers"
-WRAPPER_DIR="${COOKBOOK_RECIPE}/host-compiler-wrappers"
+#mkdir -p "${COOKBOOK_RECIPE}/host-compiler-wrappers"
+#WRAPPER_DIR="${COOKBOOK_RECIPE}/host-compiler-wrappers"
 
 # Set up symlinks for all the compiler tools
-for tool in gcc g++ ld ar ranlib strip; do
-    # Create a symlink to the real compiler
-    ln -sf "$(which x86_64-unknown-redox-${tool})" "${WRAPPER_DIR}/x86_64-unknown-redox-${tool}.real"
-    # Create a wrapper script that will intercept calls
-    ln -sf "${COOKBOOK_RECIPE}/host-compiler-wrapper.sh" "${WRAPPER_DIR}/x86_64-unknown-redox-${tool}"
-done
+#for tool in gcc g++ ld ar ranlib strip; do
+#    # Create a symlink to the real compiler
+#    ln -sf "$(which x86_64-unknown-redox-${tool})" "${WRAPPER_DIR}/x86_64-unknown-redox-${tool}.real"
+#    # Create a wrapper script that will intercept calls
+#    ln -sf "${COOKBOOK_RECIPE}/host-compiler-wrapper.sh" "${WRAPPER_DIR}/x86_64-unknown-redox-${tool}"
+#done
 
 # Add our wrapper directory to the beginning of the PATH
-export PATH="${WRAPPER_DIR}:${PATH}"
+#export PATH="${WRAPPER_DIR}:${PATH}"
 
 # These ensure that pkg-config gets the right flags from the sysroot
 export PKG_CONFIG_ALLOW_CROSS=1
@@ -76,7 +83,8 @@ export MOZCONFIG="${COOKBOOK_RECIPE}/mozconfig"
 rsync -a --delete "${COOKBOOK_SOURCE}/" ./
 PS4='+ $(basename "$0"):$LINENO: '
 
-./mach build -v
+./mach build
+echo "Exit status: $?"
 """
 
 #[package]

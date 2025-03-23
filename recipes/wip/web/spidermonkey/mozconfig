@@ -22,4 +22,3 @@ mk_add_options MOZ_MAKE_FLAGS="--trace"
 #1:07.45 /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/build/js/src/wasm/WasmSignalHandlers.cpp:387:23: error: 'RSP_sig' was not declared in this scope; did you mean 'SP_sig'?
 
 ac_add_options --disable-jit
-
