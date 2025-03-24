@@ -1,0 +1,108 @@
+[source]
+tar = "https://ftp.mozilla.org/pub/firefox/releases/136.0.2/source/firefox-136.0.2.source.tar.xz"
+blake3 = "7d4ab084f537dc9972ca87a81219149027737666f987fc5d3c29721b151708b6"
+
+patches = [
+    "01_redox.patch",
+    "02_redox.patch",
+    "03_redox_config_sub.patch",
+    "04_redox_kernel.patch",
+    "05_mozglue.patch",
+    "06_cargo_toml.patch",
+    "07_change_cmath_to_math.patch",
+    "08_remove_std_from_wchar_methods.patch"
+]
+
+[build]
+template = "custom"
+dependencies = [
+#    "curl",
+#    "libjpeg",
+#    "nghttp2",
+#    "openssl1",
+#    "sdl1",
+#    "liborbital",
+#    "libiconv",
+#    "openssl1",
+#    "cairo",
+#    "expat",
+#    "fontconfig",
+#    "fribidi",
+#    "freetype2",
+#    "glib",
+#    "libpng",
+#    "pango",
+#    "pcre",
+#    "rustpython",
+#    "oss",
+#    "xwayland",
+    "relibc",
+    "zlib"
+]
+
+script = """
+export HOST_CC=$(which gcc)
+export HOST_CXX=$(which g++)
+export HOST_LDFLAGS=-lc
+
+# these flags suffice instead of the crazy hack with host-compiler-wrappers from earlier 
+export MOZ_CARGO_WRAP_HOST_LD="$HOST_CC"
+export MOZ_CARGO_WRAP_HOST_LD_CXX="$HOST_CXX"
+export MOZ_CARGO_WRAP_HOST_LDFLAGS=$LDFLAGS
+
+#TODO: check paths for spaces!
+export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib"
+export CFLAGS="${CFLAGS} -fpermissive"
+export CXXFLAGS="${CXXFLAGS} -fpermissive"
+
+# Set up the compiler wrapper to intercept calls for host tools
+#chmod +x "${COOKBOOK_RECIPE}/host-compiler-wrapper.sh"
+
+# Create a temporary directory for our compiler wrappers
+#mkdir -p "${COOKBOOK_RECIPE}/host-compiler-wrappers"
+#WRAPPER_DIR="${COOKBOOK_RECIPE}/host-compiler-wrappers"
+
+# Set up symlinks for all the compiler tools
+#for tool in gcc g++ ld ar ranlib strip; do
+#    # Create a symlink to the real compiler
+#    ln -sf "$(which x86_64-unknown-redox-${tool})" "${WRAPPER_DIR}/x86_64-unknown-redox-${tool}.real"
+#    # Create a wrapper script that will intercept calls
+#    ln -sf "${COOKBOOK_RECIPE}/host-compiler-wrapper.sh" "${WRAPPER_DIR}/x86_64-unknown-redox-${tool}"
+#done
+
+# Add our wrapper directory to the beginning of the PATH
+#export PATH="${WRAPPER_DIR}:${PATH}"
+
+# These ensure that pkg-config gets the right flags from the sysroot
+export PKG_CONFIG_ALLOW_CROSS=1
+export PKG_CONFIG_PATH=
+export PKG_CONFIG_LIBDIR="${COOKBOOK_SYSROOT}/lib/pkgconfig"
+export PKG_CONFIG_SYSROOT_DIR="${COOKBOOK_SYSROOT}"
+
+export MOZCONFIG="${COOKBOOK_RECIPE}/mozconfig"
+rsync -a --delete "${COOKBOOK_SOURCE}/" ./
+PS4='+ $(basename "$0"):$LINENO: '
+
+./mach build
+echo "Exit status: $?"
+"""
+
+#[package]
+#shared-deps = [
+    # XXX: currently only the following are dynamically linked
+    #"curl",
+#    "libgcc",
+#    "libiconv",
+#    "liborbital",
+#    "libpng",
+#    "nghttp2",
+#    "openssl1",
+#    "relibc",
+#    "pango",
+#    "glib"
+#    "zlib",
+#]
+#dependencies = [
+#    "ca-certificates",
+#    "orbital",
+#]
