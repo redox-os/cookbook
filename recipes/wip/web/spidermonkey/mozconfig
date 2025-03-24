@@ -1,0 +1,24 @@
+ac_add_options --enable-project=js
+ac_add_options --disable-tests
+ac_add_options --target=x86_64-unknown-redox 
+ac_add_options --host=$(gcc -dumpmachine)
+ac_add_options --enable-bootstrap
+
+# TODO check if still necessary
+ac_add_options --disable-unified-build
+
+mk_add_options MOZ_MAKE_FLAGS="--trace" 
+
+# I am doing here "spray and pray", disabling as many WASM features as possible so I don't have to dive too deep into Kernel internals
+#ac_add_options --disable-wasm-branch-hinting
+#ac_add_options --wasm-no-experimental
+#ac_add_options --disable-wasm-multi-memory
+#ac_add_options --disable-wasm-simd
+
+# this makes WasmSignalHandlers.cpp errors go away:
+#1:07.44 /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/build/js/src/wasm/WasmSignalHandlers.cpp:385:23: error: 'RIP_sig' was not declared in this scope; did you mean 'SP_sig'?
+#1:07.44 /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/build/js/src/wasm/WasmSignalHandlers.cpp:385:23: error: 'RIP_sig' was not declared in this scope; did you mean 'SP_sig'?
+#1:07.45 /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/build/js/src/wasm/WasmSignalHandlers.cpp:386:23: error: 'RBP_sig' was not declared in this scope; did you mean 'SP_sig'?
+#1:07.45 /home/andrzej/otherr/redox/cookbook/recipes/wip/web/spidermonkey/target/x86_64-unknown-redox/build/js/src/wasm/WasmSignalHandlers.cpp:387:23: error: 'RSP_sig' was not declared in this scope; did you mean 'SP_sig'?
+
+ac_add_options --disable-jit
