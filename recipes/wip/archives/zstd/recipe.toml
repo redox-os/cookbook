@@ -4,12 +4,16 @@
 # for more info see starting from programs/util.c line 262: #if (PLATFORM_POSIX_VERSION >= 200809L) && defined(st_mtime)
 
 [source]
-tar = "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
+tar = "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz"
+patches = [
+	"01_redox.patch"
+]
 
 [build]
 template = "custom"
 script = """
 rsync -av --delete "${COOKBOOK_SOURCE}/" ./
+
 ${COOKBOOK_MAKE}
 """
 
