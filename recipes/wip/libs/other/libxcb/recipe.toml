@@ -1,5 +1,15 @@
-#TODO missing xcb-proto package
 [source]
 tar = "https://www.x.org/releases/individual/xcb/libxcb-1.16.tar.xz"
+patches = ["01_redox.patch"]
+
 [build]
 template = "configure"
+
+
+dependencies = [
+	"libpthread-stubs",
+	"libxau",
+	"relibc",
+	"xcb-proto",
+	"x11proto",
+]
