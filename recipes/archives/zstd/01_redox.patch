@@ -1,0 +1,11 @@
+--- orgsource/zstd-1.5.7/programs/util.c	2025-02-19 01:04:24.000000000 +0100
++++ source/programs/util.c	2025-03-24 08:32:58.501647527 +0100
+@@ -29,7 +29,7 @@
+ #else
+ #  include <unistd.h>     /* chown, stat */
+ #  include <sys/stat.h>   /* utimensat, st_mtime */
+-#  if (PLATFORM_POSIX_VERSION >= 200809L && defined(st_mtime)) \
++#  if !__redox__ && (PLATFORM_POSIX_VERSION >= 200809L && defined(st_mtime)) \
+       || (defined(__FreeBSD__) && __FreeBSD_version >= 1100056)
+ #    define ZSTD_USE_UTIMENSAT 1
+ #  else
