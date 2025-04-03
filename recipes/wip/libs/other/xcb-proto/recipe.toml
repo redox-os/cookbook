@@ -1,0 +1,4 @@
+[source]
+tar = "https://www.x.org/releases/individual/xcb/xcb-proto-1.17.0.tar.xz"
+[build]
+template = "configure"
