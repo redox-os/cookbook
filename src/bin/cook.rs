@@ -716,7 +716,7 @@ export CPPFLAGS="-I${COOKBOOK_SYSROOT}/include"
 
 # This adds the sysroot libraries and compiles binaries statically for most C compilation
 #TODO: check paths for spaces!
-export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib --static"
+export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib"
 
 # These ensure that pkg-config gets the right flags from the sysroot
 export PKG_CONFIG_ALLOW_CROSS=1
