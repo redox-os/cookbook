@@ -1,0 +1,4 @@
+name=Hnefatafl
+category=Games
+binary=/usr/games/hnefatafl-client
+icon=/ui/icons/apps/hnefatafl-king_256x256.png
