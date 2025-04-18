@@ -1,0 +1,33 @@
+[source]
+git = "https://github.com/dcampbell24/hnefatafl-copenhagen.git"
+#tar = "https://github.com/dcampbell24/hnefatafl-copenhagen/..."
+#blake3 = ""
+
+[build]
+dependencies = [
+    "liborbital",
+    # "libogg",
+    # "libvorbis",
+]
+template = "custom"
+script = """
+# Copy source to build directory
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
+
+cargo rustc \
+    --bin hnefatafl-client \
+    --no-default-features \
+    --features client \
+    --target "$TARGET" \
+    --release \
+    --manifest-path "${COOKBOOK_SOURCE}/Cargo.toml"
+
+mkdir -pv "${COOKBOOK_STAGE}/usr/games"
+cp -v "target/${TARGET}/release/hnefatafl-client" "${COOKBOOK_STAGE}/usr/games/hnefatafl-client"
+
+mkdir -pv "${COOKBOOK_STAGE}/ui/apps"
+cp -v "${COOKBOOK_RECIPE}/manifest" "${COOKBOOK_STAGE}/ui/apps/hnefatafl-client"
+
+mkdir -pv "${COOKBOOK_STAGE}/ui/icons/apps"
+cp -v "${COOKBOOK_RECIPE}/hnefatafl-king_256x256.png" "${COOKBOOK_STAGE}/ui/icons/apps/hnefatafl-king_256x256.png"
+"""
