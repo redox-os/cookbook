@@ -1,0 +1,26 @@
+[source]
+tar = "https://ftp.gnome.org/pub/gnome/sources/gdk-pixbuf/2.38/gdk-pixbuf-2.38.1.tar.xz"
+blake3 = "131cf94d458bf353e42993714477e746fe3f1e4d39cb4acd4c82a5d5e341679b"
+patches = ["redox.patch"]
+
+[build]
+dependencies = [
+    "gettext",
+    "glib",
+    "libffi",
+    "libiconv",
+    "libjpeg",
+    "libpng",
+    "pcre",
+    "shared-mime-info",
+    "zlib",
+]
+template = "custom"
+script = """
+DYNAMIC_INIT
+cookbook_meson \
+    -Dbuiltin_loaders=all \
+    -Dgir=false \
+    -Dinstalled_tests=false \
+    -Dx11=false
+"""

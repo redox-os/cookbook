@@ -1,6 +1,6 @@
 [source]
-tar = "https://download.gnome.org/sources/libxml2/2.11/libxml2-2.11.3.tar.xz"
-blake3 = "0653d3750576299c4cb88740942165671b576ff93019f3d669b3f37136225ab7"
+tar = "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.45/pcre2-10.45.tar.bz2"
+blake3 = "aea544846f9a03c1ec62c9f8d1c9a4187cc3cce557e53e6876eb6a58c7cdd9fe"
 script = """
 DYNAMIC_INIT
 autotools_recursive_regenerate
@@ -8,10 +8,6 @@ autotools_recursive_regenerate
 
 [build]
 template = "custom"
-dependencies = [
-    "xz",
-    "zlib"
-]
 script = """
 DYNAMIC_INIT
 COOKBOOK_CONFIGURE_FLAGS=(
@@ -19,7 +15,6 @@ COOKBOOK_CONFIGURE_FLAGS=(
     --prefix="/usr"
     --enable-shared
     --enable-static
-    --without-python
 )
 cookbook_configure
 """
