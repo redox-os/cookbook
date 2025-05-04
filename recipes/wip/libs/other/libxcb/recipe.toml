@@ -1,5 +1,0 @@
-#TODO missing xcb-proto package
-[source]
-tar = "https://www.x.org/releases/individual/xcb/libxcb-1.16.tar.xz"
-[build]
-template = "configure"
