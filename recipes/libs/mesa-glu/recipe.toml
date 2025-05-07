@@ -6,6 +6,11 @@ blake3 = "461543526cd681bc8fa91a1ece9519188c64ce7ad130a71213bdd0867e0884c9"
 dependencies = ["mesa"]
 template = "custom"
 script = """
+DYNAMIC_INIT
+
 COOKBOOK_CONFIGURE_FLAGS+=(--enable-osmesa)
 cookbook_configure
 """
+
+[package]
+shared-deps = ["libgcc", "mesa", "zlib"]
