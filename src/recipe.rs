@@ -1,9 +1,13 @@
 use std::{
+    collections::HashMap,
     fs,
     path::{Path, PathBuf},
 };
 
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{Error as DeError, Unexpected},
+    Deserialize, Deserializer, Serialize,
+};
 
 use crate::recipe_find::recipe_find;
 
@@ -57,6 +61,27 @@ pub enum SourceRecipe {
     },
 }
 
+// Deserialize a [`SourceRecipe`] that's valid for mirrors (no local sources).
+fn mirror_de<'de, D>(deserializer: D) -> Result<HashMap<String, SourceRecipe>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let mirrors = HashMap::deserialize(deserializer)?;
+    // Sanitize mirrors.
+    // Moving Git and Tar into its own type would be cleaner but then it's harder to work with
+    // functions that need a &SourceRecipe when we only have the new type.
+    for source in mirrors.values() {
+        if !matches!(source, SourceRecipe::Git { .. } | SourceRecipe::Tar { .. }) {
+            return Err(DeError::invalid_type(
+                Unexpected::Other("local source (same as, path)"),
+                &"remote source (git, tar)",
+            ));
+        }
+    }
+
+    Ok(mirrors)
+}
+
 /// Specifies how to build a recipe
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "template")]
@@ -93,15 +118,80 @@ pub struct PackageRecipe {
 }
 
 /// Everything required to build a Redox package
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Recipe {
-    /// Specifies how to donload the source for this recipe
+    /// Specifies how to download the source for this recipe
     pub source: Option<SourceRecipe>,
+    #[serde(default, deserialize_with = "mirror_de", rename = "mirror")]
+    pub mirrors: HashMap<String, SourceRecipe>,
     /// Specifies how to build this recipe
     pub build: BuildRecipe,
     /// Specifies how to package this recipe
     #[serde(default)]
     pub package: PackageRecipe,
+}
+
+impl<'de> Deserialize<'de> for Recipe {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Delegate {
+            pub source: Option<SourceRecipe>,
+            #[serde(default, deserialize_with = "mirror_de", rename = "mirror")]
+            pub mirrors: HashMap<String, SourceRecipe>,
+            pub build: BuildRecipe,
+            #[serde(default)]
+            pub package: PackageRecipe,
+        }
+
+        let mut recipe = Delegate::deserialize(deserializer)?;
+
+        // Clone any source scripts so recipe writers don't have to provide them per mirror.
+        for mirror in recipe.mirrors.values_mut() {
+            if let (
+                Some(SourceRecipe::Git {
+                    patches, script, ..
+                })
+                | Some(SourceRecipe::Tar {
+                    patches, script, ..
+                }),
+                SourceRecipe::Git {
+                    patches: patches_m,
+                    script: script_m,
+                    ..
+                }
+                | SourceRecipe::Tar {
+                    patches: patches_m,
+                    script: script_m,
+                    ..
+                },
+            ) = (recipe.source.as_ref(), mirror)
+            {
+                // Don't clobber if mirror has a patch/script
+                if patches_m.is_empty() {
+                    patches_m.extend(patches.iter().cloned());
+                }
+                if let Some(script) = script.as_deref() {
+                    script_m.get_or_insert_with(|| script.to_owned());
+                }
+            }
+        }
+
+        let Delegate {
+            source,
+            mirrors,
+            build,
+            package,
+        } = recipe;
+        Ok(Recipe {
+            source,
+            mirrors,
+            build,
+            package,
+        })
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -179,10 +269,12 @@ impl CookRecipe {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
+    use crate::recipe::{BuildKind, BuildRecipe, PackageRecipe, Recipe, SourceRecipe};
+
     #[test]
     fn git_cargo_recipe() {
-        use crate::recipe::{BuildKind, BuildRecipe, PackageRecipe, Recipe, SourceRecipe};
-
         let recipe: Recipe = toml::from_str(
             r#"
             [source]
@@ -207,6 +299,7 @@ mod tests {
                     patches: Vec::new(),
                     script: None,
                 }),
+                mirrors: HashMap::default(),
                 build: BuildRecipe {
                     kind: BuildKind::Cargo {
                         package_path: None,
@@ -216,7 +309,6 @@ mod tests {
                 },
                 package: PackageRecipe {
                     dependencies: Vec::new(),
-                    shared_deps: Vec::new(),
                 },
             }
         );
@@ -224,8 +316,6 @@ mod tests {
 
     #[test]
     fn tar_custom_recipe() {
-        use crate::recipe::{BuildKind, BuildRecipe, PackageRecipe, Recipe, SourceRecipe};
-
         let recipe: Recipe = toml::from_str(
             r#"
             [source]
@@ -251,6 +341,7 @@ mod tests {
                     patches: Vec::new(),
                     script: None,
                 }),
+                mirrors: HashMap::default(),
                 build: BuildRecipe {
                     kind: BuildKind::Custom {
                         script: "make".to_string()
@@ -259,9 +350,239 @@ mod tests {
                 },
                 package: PackageRecipe {
                     dependencies: Vec::new(),
-                    shared_deps: Vec::new(),
                 },
             }
+        );
+    }
+
+    #[test]
+    fn recipe_with_mirrors() {
+        let tar = "https://github.com/ZDoom/gzdoom/archive/refs/tags/g4.14.1.zip".to_owned();
+        let blake3 =
+            Some("17860b1d4cb1d26b0ccd34364977d32c098c75c2a6d3c85831774448210c754f".to_owned());
+        let github = "https://github.com/ZDoom/gzdoom/".to_owned();
+        let branch = Some("master".to_owned());
+        let rev = Some("99aa489d09015a95bb78df2b30ede29f328cc874".to_owned());
+        let redox = "https://gitlab.redox-os.org/josh/gzdoom_mirror.git".to_owned();
+        let script = "cmake".to_owned();
+
+        let recipe: Recipe = toml::from_str(&format!(
+            r#"
+            [source]
+            tar = {:?}
+            blake3 = {:?}
+
+            [mirror.github]
+            git = {:?}
+            branch = {:?}
+            rev = {:?}
+
+            [mirror.redox]
+            git = {:?}
+
+            [build]
+            template = "custom"
+            script = {:?}
+            "#,
+            tar,
+            blake3.clone().unwrap(),
+            github,
+            branch.clone().unwrap(),
+            rev.clone().unwrap(),
+            redox,
+            script,
+        ))
+        .unwrap();
+
+        let mirrors = vec![
+            (
+                "github".to_owned(),
+                SourceRecipe::Git {
+                    git: github,
+                    upstream: None,
+                    branch,
+                    rev,
+                    patches: Vec::default(),
+                    script: None,
+                },
+            ),
+            (
+                "redox".to_owned(),
+                SourceRecipe::Git {
+                    git: redox,
+                    upstream: None,
+                    branch: None,
+                    rev: None,
+                    patches: Vec::default(),
+                    script: None,
+                },
+            ),
+        ]
+        .into_iter()
+        .collect();
+
+        assert_eq!(
+            Recipe {
+                source: Some(SourceRecipe::Tar {
+                    tar,
+                    blake3,
+                    patches: Vec::default(),
+                    script: None
+                }),
+                mirrors,
+                build: BuildRecipe {
+                    kind: BuildKind::Custom { script },
+                    dependencies: Vec::default()
+                },
+                package: PackageRecipe {
+                    dependencies: Vec::default()
+                }
+            },
+            recipe
+        )
+    }
+
+    #[test]
+    #[should_panic]
+    fn recipe_with_invalid_mirror() {
+        let _: Recipe = toml::from_str(
+            r#"
+            [source]
+            git = "https://github.com/opentyrian/opentyrian"
+
+            [mirror.invalid]
+            path = "/opt/sources/tyrian"
+
+            [build]
+            template = "custom"
+            script = {:?}
+            "#,
+        )
+        .expect("Non-local mirror should fail");
+    }
+
+    #[test]
+    fn recipe_with_mirrors_and_single_script() {
+        let github = "https://github.com/dolphin-emu/dolphin";
+        let redox = "https://gitlab.redox-os.org/josh/dolphin_mirror.git";
+        let patches = vec!["redox1.patch".to_owned(), "redox2.patch".to_owned()];
+        let script = "./importantstuff.sh";
+        let mirrors = vec![(
+            "redox".to_owned(),
+            SourceRecipe::Git {
+                git: redox.to_owned(),
+                upstream: None,
+                branch: None,
+                rev: None,
+                patches: patches.clone(),
+                script: Some(script.to_owned()),
+            },
+        )]
+        .into_iter()
+        .collect();
+
+        let recipe: Recipe = toml::from_str(&format!(
+            r#"
+            [source]
+            git = {:?}
+            patches = {:?}
+            script = {:?}
+
+            [mirror.redox]
+            git = {:?}
+
+            [build]
+            template = "configure"
+            "#,
+            github, patches, script, redox,
+        ))
+        .unwrap();
+
+        assert_eq!(
+            Recipe {
+                source: Some(SourceRecipe::Git {
+                    git: github.to_owned(),
+                    upstream: None,
+                    branch: None,
+                    rev: None,
+                    patches,
+                    script: Some(script.to_owned())
+                }),
+                mirrors,
+                build: BuildRecipe {
+                    kind: BuildKind::Configure,
+                    dependencies: Vec::default()
+                },
+                package: PackageRecipe {
+                    dependencies: Vec::default()
+                }
+            },
+            recipe
+        )
+    }
+
+    #[test]
+    fn recipe_with_mirrors_and_mirror_scripts() {
+        let github = "https://github.com/mgba-emu/mgba";
+        let patches_main = vec!["redox1.patch".to_owned()];
+        let script_main = "./foobar.sh";
+
+        let redox = "https://gitlab.redox-os.org/josh/mgba_mirror.git";
+        let patches_mirror = vec!["mirror.patch".to_owned()];
+        let script_mirror = "";
+        let mirrors = vec![(
+            "redox".to_owned(),
+            SourceRecipe::Git {
+                git: redox.to_owned(),
+                upstream: None,
+                branch: None,
+                rev: None,
+                patches: patches_mirror.clone(),
+                script: Some(script_mirror.to_owned()),
+            },
+        )]
+        .into_iter()
+        .collect();
+
+        let recipe: Recipe = toml::from_str(&format!(
+            r#"
+            [source]
+            git = {:?}
+            patches = {:?}
+            script = {:?}
+
+            [mirror.redox]
+            git = {:?}
+            patches = {:?}
+            script = {:?}
+
+            [build]
+            template = "configure"
+            "#,
+            github, patches_main, script_main, redox, patches_mirror, script_mirror
+        ))
+        .unwrap();
+
+        assert_eq!(
+            Recipe {
+                source: Some(SourceRecipe::Git {
+                    git: github.to_owned(),
+                    upstream: None,
+                    branch: None,
+                    rev: None,
+                    patches: patches_main,
+                    script: Some(script_main.to_owned())
+                }),
+                mirrors,
+                build: BuildRecipe {
+                    kind: BuildKind::Configure,
+                    dependencies: Vec::default()
+                },
+                package: PackageRecipe {
+                    dependencies: Vec::default()
+                }
+            },
+            recipe
         );
     }
 }

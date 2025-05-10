@@ -1,6 +1,6 @@
 use cookbook::blake3::blake3_progress;
 use cookbook::package::StageToml;
-use cookbook::recipe::{BuildKind, CookRecipe, PackageRecipe, Recipe, SourceRecipe};
+use cookbook::recipe::{BuildKind, CookRecipe, Recipe, SourceRecipe};
 use cookbook::recipe_find::recipe_find;
 use std::{
     collections::BTreeSet,
@@ -209,7 +209,7 @@ function DYNAMIC_INIT {
 }
 "#;
 
-fn fetch(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result<PathBuf, String> {
+fn fetch(recipe_dir: &Path, source: Option<&SourceRecipe>) -> Result<PathBuf, String> {
     let source_dir = recipe_dir.join("source");
     match source {
         Some(SourceRecipe::SameAs { same_as }) => {
@@ -506,7 +506,7 @@ fi"#,
 fn auto_deps(stage_dir: &Path, dep_pkgars: &BTreeSet<(String, PathBuf)>) -> BTreeSet<String> {
     let mut paths = BTreeSet::new();
     for dir in &[stage_dir.join("usr/bin"), stage_dir.join("usr/lib")] {
-        let Ok(read_dir) = fs::read_dir(&dir) else {
+        let Ok(read_dir) = fs::read_dir(dir) else {
             continue;
         };
         for entry_res in read_dir {
@@ -648,24 +648,21 @@ fn build(
             create_dir(&sysroot_dir_tmp.join("usr").join(folder))?;
 
             // Link sysroot/$folder sysroot/usr/$folder
-            symlink(Path::new("usr").join(folder), &sysroot_dir_tmp.join(folder))?;
+            symlink(Path::new("usr").join(folder), sysroot_dir_tmp.join(folder))?;
         }
 
         for (_dep, archive_path) in &dep_pkgars {
             let public_path = "build/id_ed25519.pub.toml";
-            pkgar::extract(
-                public_path,
-                &archive_path,
-                sysroot_dir_tmp.to_str().unwrap(),
-            )
-            .map_err(|err| {
-                format!(
-                    "failed to install '{}' in '{}': {:?}",
-                    archive_path.display(),
-                    sysroot_dir_tmp.display(),
-                    err
-                )
-            })?;
+            pkgar::extract(public_path, archive_path, sysroot_dir_tmp.to_str().unwrap()).map_err(
+                |err| {
+                    format!(
+                        "failed to install '{}' in '{}': {:?}",
+                        archive_path.display(),
+                        sysroot_dir_tmp.display(),
+                        err
+                    )
+                },
+            )?;
         }
 
         // Move sysroot.tmp to sysroot atomically
@@ -1054,8 +1051,18 @@ fn package(
 }
 
 fn cook(recipe_dir: &Path, name: &str, recipe: &Recipe, fetch_only: bool) -> Result<(), String> {
-    let source_dir =
-        fetch(recipe_dir, &recipe.source).map_err(|err| format!("failed to fetch: {}", err))?;
+    let source_dir = fetch(recipe_dir, recipe.source.as_ref())
+        .map_err(|err| format!("failed to fetch: {}", err))
+        .or_else(|mut err| {
+            for (mirror, source) in recipe.mirrors.iter() {
+                match fetch(recipe_dir, Some(source)) {
+                    Ok(source_dir) => return Ok(source_dir),
+                    Err(e) => err += &format!("failed to fetch (mirror {mirror}): {e}"),
+                }
+            }
+
+            Err(err)
+        })?;
 
     if fetch_only {
         return Ok(());
@@ -1070,7 +1077,7 @@ fn cook(recipe_dir: &Path, name: &str, recipe: &Recipe, fetch_only: bool) -> Res
         create_dir(&target_dir)?;
     }
 
-    let (stage_dir, auto_deps) = build(recipe_dir, &source_dir, &target_dir, name, &recipe)
+    let (stage_dir, auto_deps) = build(recipe_dir, &source_dir, &target_dir, name, recipe)
         .map_err(|err| format!("failed to build: {}", err))?;
 
     let _package_file = package(
@@ -1078,7 +1085,7 @@ fn cook(recipe_dir: &Path, name: &str, recipe: &Recipe, fetch_only: bool) -> Res
         &stage_dir,
         &target_dir,
         name,
-        &recipe,
+        recipe,
         &auto_deps,
     )
     .map_err(|err| format!("failed to package: {}", err))?;
