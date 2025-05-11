@@ -1,0 +1,36 @@
+[source]
+git = "https://gitlab.redox-os.org/redox-os/timidity.git"
+branch = "redox"
+
+[build]
+template = "custom"
+script = """
+export LDFLAGS="-static"
+
+cd "${COOKBOOK_SOURCE}"
+
+autoreconf -f -i
+
+wget -O autoconf/config.sub "https://gitlab.redox-os.org/redox-os/gnu-config/-/raw/master/config.sub?inline=false"
+
+./configure \
+    --build="$(gcc -dumpmachine)" \
+    --host="${TARGET}" \
+    --prefix="" \
+    --enable-vt100
+
+make -j"$(nproc)"
+
+make DESTDIR="${COOKBOOK_STAGE}" install
+
+mkdir -pv "${COOKBOOK_STAGE}/etc/timidity"
+echo "soundfont /share/generaluser-gs/generaluser-gs.sf2" >> "${COOKBOOK_STAGE}/etc/timidity/timidity.cfg"
+
+mkdir -pv "${COOKBOOK_STAGE}/share/timidity"
+echo "soundfont /share/generaluser-gs/generaluser-gs.sf2" >> "${COOKBOOK_STAGE}/share/timidity/timidity.cfg"
+"""
+
+[package]
+dependencies = [
+    "generaluser-gs",
+]
