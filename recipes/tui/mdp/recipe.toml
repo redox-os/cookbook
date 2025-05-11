@@ -1,0 +1,19 @@
+[source]
+git = "https://github.com/visit1985/mdp.git"
+
+[build]
+template = "custom"
+dependencies = [
+    "ncursesw",
+    "terminfo"
+]
+script = """
+cd "${COOKBOOK_SOURCE}"
+
+export CFLAGS="-I${COOKBOOK_SYSROOT}/include -I${COOKBOOK_SYSROOT}/include/ncursesw"
+export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib"
+
+"${REDOX_MAKE}" -j"$(${NPROC})"
+
+"${REDOX_MAKE}" DESTDIR="${COOKBOOK_STAGE}" PREFIX="" install
+"""
