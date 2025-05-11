@@ -1,0 +1,35 @@
+[source]
+tar = "https://downloads.scummvm.org/frs/scummvm/2.0.0/scummvm-2.0.0.tar.xz"
+blake3 = "02e6791fd43ad3cb4238c07d23350ca1459a0f692689e585dba1d46648f64327"
+patches = ["redox.patch"]
+
+[build]
+template = "custom"
+dependencies = [
+    "sdl1",
+    "liborbital",
+    "freetype2",
+    "zlib",
+    "libpng",
+]
+script = """
+export LDFLAGS="-static"
+
+cd "${COOKBOOK_SOURCE}"
+
+wget -O config.sub "https://gitlab.redox-os.org/redox-os/gnu-config/-/raw/master/config.sub?inline=false"
+
+./configure \
+    --host="${TARGET}" \
+    --prefix="" \
+    --with-sdl-prefix="${COOKBOOK_SYSROOT}" \
+    --with-freetype2-prefix="${COOKBOOK_SYSROOT}" \
+    --with-png-prefix="${COOKBOOK_SYSROOT}" \
+    --with-zlib-prefix="${COOKBOOK_SYSROOT}" \
+    --disable-timidity \
+    --disable-mt32emu
+
+make -j"$(nproc)"
+
+make DESTDIR="${COOKBOOK_STAGE}" install
+"""
