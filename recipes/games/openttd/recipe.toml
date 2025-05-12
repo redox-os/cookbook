@@ -14,17 +14,18 @@ dependencies = [
     "zlib",
 ]
 script = """
-cd "${COOKBOOK_SOURCE}"
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 
-# Old recipe used a build environment variable which doesn't seem to be available in new format
-# We'll use gcc -dumpmachine and hope it's not an issue
-./configure \
-    --build="$(gcc -dumpmachine)" \
-    --host="${TARGET}" \
-    --prefix="" \
-    --enable-static \
-    --without-liblzo2 \
-    --disable-network \
+# Unsure if the bundle dir is necessary
+# Or why the installation differs
+# Could be unnecessary
+./configure \\
+    --build="$(gcc -dumpmachine)" \\
+    --host="${TARGET}" \\
+    --prefix="" \\
+    --enable-static \\
+    --without-liblzo2 \\
+    --disable-network \\
     --without-threads
 
 make VERBOSE=1 -j"$(nproc)"
@@ -32,7 +33,7 @@ make VERBOSE=1 -j"$(nproc)"
 dest="${COOKBOOK_STAGE}"
 bundledir="$dest/bundle"
 
-make VERBOSE=1 ROOT_DIR="${COOKBOOK_SOURCE}/" BUNDLE_DIR="$bundledir" INSTALL_DIR="$dest/usr" install
+make VERBOSE=1 ROOT_DIR="./" BUNDLE_DIR="$bundledir" INSTALL_DIR="$dest/usr" install
 rm -rf "$bundledir"
 
 if [ -d "${COOKBOOK_STAGE}/usr/bin" ]

@@ -6,7 +6,6 @@ branch = "redox"
 [build]
 template = "custom"
 script = """
-cd "${COOKBOOK_SOURCE}/rustual-boy-cli"
 COOKBOOK_SOURCE="${COOKBOOK_SOURCE}/rustual-boy-cli"
 cookbook_cargo
 """
