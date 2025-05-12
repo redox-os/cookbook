@@ -6,9 +6,9 @@ patches = ["redox.patch"]
 [build]
 template = "custom"
 script = """
-cd "${COOKBOOK_SOURCE}"
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 
-"${REDOX_MAKE}" -j"$(${NPROC})"
+"${COOKBOOK_MAKE}" -j"$(${NPROC})"
 
 mkdir -pv "${COOKBOOK_STAGE}/usr/bin"
 cp -v "libc-bench" "${COOKBOOK_STAGE}/usr/bin"

@@ -8,12 +8,13 @@ dependencies = [
     "terminfo"
 ]
 script = """
-cd "${COOKBOOK_SOURCE}"
+rsync -av --delete --exclude='.git' "${COOKBOOK_SOURCE}/" ./
 
 export CFLAGS="-I${COOKBOOK_SYSROOT}/include -I${COOKBOOK_SYSROOT}/include/ncursesw"
 export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib"
 
-"${REDOX_MAKE}" -j"$(${NPROC})"
+"${COOKBOOK_MAKE}" -j"$(${NPROC})"
 
+# Install
 "${REDOX_MAKE}" DESTDIR="${COOKBOOK_STAGE}" PREFIX="" install
 """

@@ -14,14 +14,16 @@ export CFLAGS="-I${COOKBOOK_SYSROOT}/include -I${COOKBOOK_SYSROOT}/include/SDL"
 export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib -static"
 export LIBS="-lSDL -lorbital" # TODO: Uses sdl-config instead of pkg-config
 
-cd "${COOKBOOK_SOURCE}"
+# For some reason, cook_configure breaks spectacularly on this
+# We will just copy instead
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 
 wget -O autotools/config.sub "https://gitlab.redox-os.org/redox-os/gnu-config/-/raw/master/config.sub?inline=false"
 
-./configure \
-    --build="$(gcc -dumpmachine)" \
-    --host="${TARGET}" \
-    --prefix="" \
+./configure \\
+    --build="$(gcc -dumpmachine)" \\
+    --host="${TARGET}" \\
+    --prefix="" \\
     --with-sdl-prefix="${COOKBOOK_SYSROOT}"
 
 make -j"$(nproc)"

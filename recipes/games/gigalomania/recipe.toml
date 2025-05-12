@@ -16,7 +16,7 @@ dependencies = [
     "zlib"
 ]
 script = """
-cd "${COOKBOOK_SOURCE}"
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 
 export CPPHOST="${TARGET}-g++"
 export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib --static"
