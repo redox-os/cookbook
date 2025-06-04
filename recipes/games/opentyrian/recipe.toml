@@ -9,19 +9,21 @@
 
 [source]
 git = "https://github.com/opentyrian/opentyrian"
-patches = [ "redox.patch" ]
+patches = ["redox.patch"]
 
 [build]
 template = "custom"
 dependencies = [
-    "llvm18",
-    "liborbital",
-    "mesa",
-    "sdl2",
-    "zlib",
-    # "sdl2-net"
+  "llvm18",
+  "liborbital",
+  "mesa",
+  "sdl2",
+  "zlib",
+  # "sdl2-net"
 ]
 script = """
+DYNAMIC_INIT
+
 # Build system is only a standalone Makefile
 COOKBOOK_CONFIGURE="true"
 COOKBOOK_CONFIGURE_FLAGS=""
@@ -36,6 +38,10 @@ export bindir="${prefix}/games"
 export icondir="/ui/icons/apps"
 export gamesdir="${prefix}/share/games"
 
+if ! [[ -n "${COOKBOOK_PREFER_STATIC}" ]]; then
+    LDFLAGS+=" -lstdc++"
+fi
+
 # Prepare the sources and download Tyrian (freeware)
 rsync -av --delete "${COOKBOOK_SOURCE}/" "${COOKBOOK_RECIPE}/tyrian21.zip.sha" ./
 mkdir -p "${ASSETSDIR}"
@@ -45,3 +51,6 @@ unzip -jd "${ASSETSDIR}" tyrian21.zip
 
 cookbook_configure
 """
+
+[package]
+shared-deps = ["libgcc", "liborbital", "llvm18-shared", "mesa", "zlib"]
