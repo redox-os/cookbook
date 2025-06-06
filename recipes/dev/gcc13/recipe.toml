@@ -43,6 +43,6 @@ COOKBOOK_CONFIGURE_FLAGS=(
 ln -s "gcc" "${COOKBOOK_STAGE}/bin/cc"
 pushd "${COOKBOOK_STAGE}"
 # The symbolic link will be correct on Redox
-ln -s "/libexec/gcc/x86_64-unknown-redox/13.2.0/cc1" "./bin/cc1"
+ln -s "/libexec/gcc/${GNU_TARGET}/13.2.0/cc1" "./bin/cc1"
 popd
 """
