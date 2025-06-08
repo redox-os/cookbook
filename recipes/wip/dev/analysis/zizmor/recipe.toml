@@ -1,5 +1,8 @@
-#TODO not compiled or tested
+#TODO camino crate error
 [source]
 git = "https://github.com/woodruffw/zizmor"
 [build]
-template = "cargo"
+template = "custom"
+script = """
+cookbook_cargo_packages zizmor
+"""

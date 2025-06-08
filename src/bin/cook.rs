@@ -797,26 +797,31 @@ function cookbook_configure {
 COOKBOOK_CMAKE="cmake"
 COOKBOOK_NINJA="ninja"
 function cookbook_cmake {
-    cat > CMakeToolchain-x86_64.cmake <<EOF
-    set(CMAKE_SYSTEM_NAME UnixPaths)
-    set(CMAKE_FIND_ROOT_PATH ${COOKBOOK_SYSROOT})
-    set(CMAKE_C_COMPILER ${TARGET}-gcc)
-    set(CMAKE_CXX_COMPILER ${TARGET}-g++)
-    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-    set(CMAKE_SHARED_LIBRARY_SONAME_C_FLAG "-Wl,-soname,")
-    set(CMAKE_PLATFORM_USES_PATH_WHEN_NO_SONAME 1)
+    cat > cross_file.cmake <<EOF
+set(CMAKE_AR ${TARGET}-ar)
+set(CMAKE_CXX_COMPILER ${TARGET}-g++)
+set(CMAKE_C_COMPILER ${TARGET}-gcc)
+set(CMAKE_FIND_ROOT_PATH ${COOKBOOK_SYSROOT})
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_PLATFORM_USES_PATH_WHEN_NO_SONAME 1)
+set(CMAKE_PREFIX_PATH, ${COOKBOOK_SYSROOT})
+set(CMAKE_RANLIB ${TARGET}-ranlib)
+set(CMAKE_SHARED_LIBRARY_SONAME_C_FLAG "-Wl,-soname,")
+set(CMAKE_SYSTEM_NAME UnixPaths)
+set(CMAKE_SYSTEM_PROCESSOR $(echo "${TARGET}" | cut -d - -f1))
 EOF
 
     "${COOKBOOK_CMAKE}" "${COOKBOOK_SOURCE}" \
-        -DCMAKE_TOOLCHAIN_FILE=./CMakeToolchain-x86_64.cmake
-        -DCMAKE_INSTALL_PREFIX="." \
-        -DCMAKE_INSTALL_LIBDIR=lib \
-        -DCMAKE_INSTALL_SBINDIR=bin \
-        -DCMAKE_INSTALL_INCLUDEDIR="include" \
-        -DCMAKE_INSTALL_OLDINCLUDEDIR="/include" \
         -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CROSSCOMPILING=True \
+        -DCMAKE_INSTALL_INCLUDEDIR=include \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DCMAKE_INSTALL_OLDINCLUDEDIR=/include \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_SBINDIR=bin \
+        -DCMAKE_TOOLCHAIN_FILE=cross_file.cmake \
         -DBUILD_SHARED_LIBS=True \
         -DENABLE_STATIC=False \
         -GNinja \
@@ -843,6 +848,8 @@ function cookbook_meson {
     echo "strip = '${STRIP}'" >> cross_file.txt
     echo "pkg-config = '${PKG_CONFIG}'" >> cross_file.txt
     echo "llvm-config = '${TARGET}-llvm-config'" >> cross_file.txt
+    echo "glib-compile-resources = 'glib-compile-resources'" >> cross_file.txt
+    echo "glib-compile-schemas = 'glib-compile-schemas'" >> cross_file.txt
 
     echo "[host_machine]" >> cross_file.txt
     echo "system = 'redox'" >> cross_file.txt

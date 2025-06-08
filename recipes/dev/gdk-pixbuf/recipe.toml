@@ -9,9 +9,9 @@ dependencies = [
     "glib",
     "libffi",
     "libiconv",
-    "libjpeg",
+    "libjpeg-turbo",
     "libpng",
-    "pcre",
+    "pcre2",
     "shared-mime-info",
     "zlib",
 ]

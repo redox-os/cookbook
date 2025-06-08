@@ -1,8 +1,8 @@
-#TODO not compiled or tested
+#TODO compiled but not tested
 [source]
 git = "https://github.com/DioxusLabs/taffy"
 [build]
 template = "custom"
 script = """
-cookbook_cargo_examples basic cosmic_text
+cookbook_cargo_examples basic
 """
