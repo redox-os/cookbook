@@ -10,7 +10,7 @@ package=hnefatafl-copenhagen
             --package "${package}" \
             --release \
             --no-default-features \
-            --client
+            --features client
         mkdir -pv "${COOKBOOK_STAGE}/usr/bin"
         cp -v \
             "target/${TARGET}/release/${package}" \
