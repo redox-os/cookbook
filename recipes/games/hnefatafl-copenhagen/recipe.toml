@@ -1,20 +1,18 @@
-[source]
 git = "https://github.com/dcampbell24/hnefatafl-copenhagen"
 
 [build]
 template = "custom"
 script = """
-package=hnefatafl-copenhagen
 "${COOKBOOK_CARGO}" build \
-            --example hnefatafl-client
-            --manifest-path "${COOKBOOK_SOURCE}/Cargo.toml" \
-            --package "${package}" \
-            --release \
-            --no-default-features \
-        mkdir -pv "${COOKBOOK_STAGE}/usr/bin"
-        cp -v \
-            "target/${TARGET}/release/examples/hnefatafl-client" \
-            "${COOKBOOK_STAGE}/usr/bin/hnefatafl-client"
+    --manifest-path "${COOKBOOK_SOURCE}/${PACKAGE_PATH}/Cargo.toml" \
+    --example hnefatafl-client
+    --release \
+    --no-default-features
+
+mkdir -pv "${COOKBOOK_STAGE}/usr/bin"
+cp -v \
+    "target/${TARGET}/release/examples/hnefatafl-client" \
+    "${COOKBOOK_STAGE}/usr/bin/hnefatafl-client"
 
 mkdir -pv "${COOKBOOK_STAGE}"/usr/games
 mkdir -pv "${COOKBOOK_STAGE}"/ui/apps
