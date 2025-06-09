@@ -1,3 +1,4 @@
+[source]
 git = "https://github.com/dcampbell24/hnefatafl-copenhagen"
 
 [build]
