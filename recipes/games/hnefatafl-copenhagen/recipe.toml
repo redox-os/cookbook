@@ -5,7 +5,7 @@ template = "custom"
 script = """
 "${COOKBOOK_CARGO}" build \
     --manifest-path "${COOKBOOK_SOURCE}/${PACKAGE_PATH}/Cargo.toml" \
-    --example hnefatafl-client
+    --example hnefatafl-client \
     --release \
     --no-default-features
 
