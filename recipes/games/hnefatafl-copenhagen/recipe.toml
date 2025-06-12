@@ -2,8 +2,7 @@
 # 1. The CJK and runes fonts don't load.
 # 2. On a button press two characters are read in instead of one.
 # 3. Backspace does not work.
-# 4. Sound does not work via the crate rodio. It may be that I just configured qemu sound wrong.
-# 5. Following a URL via webbrowser does not work.
+# 4. Following a URL via webbrowser does not work.
 
 [source]
 git = "https://github.com/dcampbell24/hnefatafl-copenhagen"
