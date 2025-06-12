@@ -1,8 +1,0 @@
-#TODO not compiled or tested
-[source]
-git = "https://github.com/theseus-rs/ristretto"
-[build]
-template = "custom"
-script = """
-cookbook_cargo_packages ristretto_cli
-"""

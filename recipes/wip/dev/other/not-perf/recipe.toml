@@ -1,5 +1,8 @@
-#TODO not compiled or tested
+#TODO perf_event_open crate error (after cargo update)
 [source]
 git = "https://github.com/koute/not-perf"
 [build]
-template = "cargo"
+template = "custom"
+script = """
+cookbook_cargo_packages nperf
+"""

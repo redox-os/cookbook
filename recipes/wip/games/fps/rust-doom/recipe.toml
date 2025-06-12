@@ -1,6 +1,6 @@
-#TODO not compiled or tested
+#TODO compiled but not tested
 [source]
-git = "https://github.com/cristicbz/rust-doom"
+git = "https://github.com/hovinen/rust-doom"
 [build]
 template = "custom"
 script = """

@@ -1,5 +1,8 @@
-#TODO not compiled or tested
+#TODO compiled but not tested
 [source]
 git = "https://github.com/Jitpomi/ferrisup"
 [build]
 template = "cargo"
+dependencies = [
+    "openssl1",
+]
