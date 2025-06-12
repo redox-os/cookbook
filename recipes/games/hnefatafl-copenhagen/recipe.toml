@@ -3,6 +3,7 @@
 # 2. On a button press two characters are read in instead of one.
 # 3. Backspace does not work.
 # 4. Following a URL via webbrowser does not work.
+# 5. The command line prompt prints 'deprecated: legacy path "time:4" used by /usr/games/hnefatafl-client'.
 
 [source]
 git = "https://github.com/dcampbell24/hnefatafl-copenhagen"
