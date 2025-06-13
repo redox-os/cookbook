@@ -2,8 +2,7 @@
 # 1. The CJK and runes fonts don't load.
 # 2. On a button press two characters are read in instead of one.
 # 3. Backspace does not work.
-# 4. The webbrowser crate does not build because of an undeclared crate or module `home`.
-# 5. The command line prompt prints 'deprecated: legacy path "time:4" used by /usr/games/hnefatafl-client'.
+# 4. The command line prompt prints 'deprecated: legacy path "time:4" used by /usr/games/hnefatafl-client'.
 
 [source]
 git = "https://github.com/dcampbell24/hnefatafl-copenhagen"
