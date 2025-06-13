@@ -3,6 +3,7 @@
 # 2. On a button press two characters are read in instead of one.
 # 3. Backspace does not work.
 # 4. The command line prompt prints 'deprecated: legacy path "time:4" used by /usr/games/hnefatafl-client'.
+# 5. TcpStream.shutdown(): shutdown call failed: Os { code: 38, kind: Unsupported, message: "Function not implemented" }
 
 [source]
 git = "https://github.com/dcampbell24/hnefatafl-copenhagen"
