@@ -1,6 +1,10 @@
 [source]
 git = "https://gitlab.freedesktop.org/xdg/default-icon-theme.git"
 
+[mirror.pinned_version]
+tar = "http://icon-theme.freedesktop.org/releases/hicolor-icon-theme-0.17.tar.xz"
+blake3 = "95dba49dbf1e5bbf701ff98c1d80508359f274572f3fdaf70d3f07a16bf9534f"
+
 [build]
 template = "custom"
 script = """

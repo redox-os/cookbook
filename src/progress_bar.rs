@@ -13,7 +13,7 @@ impl<'p, 'r, P: Write, R: Read> ProgressBarRead<'p, 'r, P, R> {
     }
 }
 
-impl<'p, 'r, P: Write, R: Read> Read for ProgressBarRead<'p, 'r, P, R> {
+impl<P: Write, R: Read> Read for ProgressBarRead<'_, '_, P, R> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let count = self.r.read(buf)?;
         self.pb.add(count as u64);
