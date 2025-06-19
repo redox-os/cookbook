@@ -6,7 +6,7 @@
 # 5. TcpStream.shutdown(): shutdown call failed: Os { code: 38, kind: Unsupported, message: "Function not implemented" }
 
 [source]
-git = "https://github.com/dcampbell24/hnefatafl-copenhagen"
+git = "https://github.com/dcampbell24/hnefatafl"
 
 [build]
 template = "custom"
