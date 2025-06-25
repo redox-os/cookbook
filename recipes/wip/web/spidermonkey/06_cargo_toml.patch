@@ -1,0 +1,11 @@
+--- orgsource/firefox-136.0.2/Cargo.toml	2025-03-17 18:28:56.000000000 +0100
++++ source/Cargo.toml	2025-03-23 00:36:20.834528686 +0100
+@@ -134,7 +134,7 @@
+ redox_users = { path = "build/rust/redox_users" }
+ 
+ # Patch redox_syscall to an empty crate
+-redox_syscall = { path = "build/rust/redox_syscall" }
++redox_syscall = { git = "https://gitlab.redox-os.org/redox-os/syscall" }
+ 
+ # Patch hermit-abi to an empty crate
+ hermit-abi = { path = "build/rust/hermit-abi" }
