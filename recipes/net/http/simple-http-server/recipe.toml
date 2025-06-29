@@ -1,8 +1,15 @@
-#TODO promote
 [source]
 git = "https://github.com/TheWaWaR/simple-http-server"
+patches = [
+    "redox.patch"
+]
+
 [build]
-template = "cargo"
+template = "custom"
 dependencies = [
     "openssl1",
 ]
+script = """
+DYNAMIC_INIT
+cookbook_cargo
+"""
