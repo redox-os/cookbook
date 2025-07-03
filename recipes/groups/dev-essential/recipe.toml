@@ -11,7 +11,7 @@ dependencies = [
     "gnu-binutils",
     "gnu-make",
     "libffi",
-    "rustpython",
+    #"rustpython",
     "lua54",
     "nasm",
     "patch",
