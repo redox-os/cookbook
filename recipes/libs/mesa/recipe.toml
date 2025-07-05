@@ -11,13 +11,23 @@ dependencies = [
     "zlib",
 ]
 script = """
+DYNAMIC_INIT
+
 #TODO: do this in cook instead
 unset AR AS CC CXX LD NM OBJCOPY OBJDUMP RANLIB READELF STRIP
 
 export CFLAGS="-I${COOKBOOK_SYSROOT}/include -DHAVE_PTHREAD=1"
 export CPPFLAGS="-I${COOKBOOK_SYSROOT}/include -DHAVE_PTHREAD=1"
-export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib --static"
 export LLVM_CONFIG="${TARGET}-llvm-config"
+
+if [[ -n "${COOKBOOK_PREFER_STATIC}" ]]; then
+    export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib --static"
+    export DEFAULTLIB="static"
+    export LLVMSHARED="disabled"
+else
+    export DEFAULTLIB="shared"
+    export LLVMSHARED="enabled"
+fi
 
 # TODO: Fix this annoying shite
 echo "[binaries]" > cross_file.txt
@@ -46,13 +56,13 @@ meson "${COOKBOOK_SOURCE}" . \
     --cross-file cross_file.txt \
     --buildtype release \
     --strip \
-    -Ddefault_library=static \
+    -Ddefault_library="${DEFAULTLIB}" \
     -Dglx=disabled \
     -Dllvm=enabled \
     -Dosmesa=true \
     -Dplatforms= \
     -Dshader-cache=disabled \
-    -Dshared-llvm=disabled \
+    -Dshared-llvm="${LLVMSHARED}" \
     -Dshared-glapi=disabled
 ninja -v
 DESTDIR="${COOKBOOK_STAGE}" ninja install
@@ -61,3 +71,6 @@ DESTDIR="${COOKBOOK_STAGE}" ninja install
 #TODO: only add necessary LLVM libs, not all of them
 sed -i "s/ -lOSMesa / -lOSMesa $("${TARGET}-llvm-config" --libs) -lstdc++ /" "${COOKBOOK_STAGE}/usr/lib/pkgconfig/osmesa.pc"
 """
+
+[package]
+shared-deps = ["llvm18-shared", "libgcc", "zlib"]
