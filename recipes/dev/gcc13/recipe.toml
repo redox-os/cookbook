@@ -43,5 +43,6 @@ COOKBOOK_CONFIGURE_FLAGS=(
 ln -s "gcc" "${COOKBOOK_STAGE}/bin/cc"
 mkdir -p "${COOKBOOK_STAGE}/usr/libexec"
 ln -s "/libexec/gcc" "${COOKBOOK_STAGE}/usr/libexec/gcc"
+# TODO These files should be created in a recipe and added as a dependency for gcc13
 cp -fpv "${COOKBOOK_HOST_SYSROOT}"/lib/gcc/"${GNU_TARGET}"/13.2.0/{*.o,*.a} "${COOKBOOK_STAGE}/lib"
 """
