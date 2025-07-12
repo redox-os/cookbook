@@ -1,0 +1,9 @@
+#TODO requires rustc 1.87 (our toolchain is 1.86)
+[source]
+git = "https://github.com/microsoft/edit.git"
+
+[build]
+template = "custom"
+script = """
+cookbook_cargo
+"""
