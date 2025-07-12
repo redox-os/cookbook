@@ -234,6 +234,7 @@ mod tests {
                     rev: Some("06344744d3d55a5ac9a62a6059cb363d40699bbc".to_string()),
                     patches: Vec::new(),
                     script: None,
+                    shallow_clone: None,
                 }),
                 build: BuildRecipe {
                     kind: BuildKind::Cargo {
@@ -277,7 +278,6 @@ mod tests {
                     ),
                     patches: Vec::new(),
                     script: None,
-                    shallow_clone: None,
                 }),
                 build: BuildRecipe {
                     kind: BuildKind::Custom {
