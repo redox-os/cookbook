@@ -149,6 +149,14 @@ fi
 
 echo -e "\033[01;38;5;155mrepo - generating repo.toml\033[0m" >&2
 
+REPO_BUILDER="./target/release/repo_builder"
+
+if [ -x "$REPO_BUILDER" ]
+then
+    "$REPO_BUILDER" "$REPO"
+else
+
+# TODO: Delete this some time (when everyone has the binary)
 echo "[packages]" > "$REPO/repo.toml"
 for toml in "$REPO/"*".toml"
 do
@@ -159,3 +167,5 @@ do
         echo "$package =$version" >> "$REPO/repo.toml"
     fi
 done
+
+fi
