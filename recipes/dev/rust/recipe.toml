@@ -19,7 +19,7 @@ python3 "${COOKBOOK_SOURCE}/x.py" install --config "${COOKBOOK_RECIPE}/config.to
 
 rsync -av --delete "${COOKBOOK_SOURCE}"/install/* "${COOKBOOK_STAGE}/"
 # Cannot use STRIP because it is unset previously
-"${HOST}-strip" -v "$1/bin/rustc"
+"${HOST}-strip" -v "${COOKBOOK_STAGE}/bin/rustc"
 # TODO: rustdoc
 """
 
