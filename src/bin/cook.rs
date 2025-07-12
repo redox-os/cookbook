@@ -380,21 +380,23 @@ fi"#,
                 run_command(command)?;
             }
 
-            // Sync submodules URL
-            let mut command = Command::new("git");
-            command.arg("-C").arg(&source_dir);
-            command.arg("submodule").arg("sync").arg("--recursive");
-            run_command(command)?;
+            if !shallow_clone {
+                // Sync submodules URL
+                let mut command = Command::new("git");
+                command.arg("-C").arg(&source_dir);
+                command.arg("submodule").arg("sync").arg("--recursive");
+                run_command(command)?;
 
-            // Update submodules
-            let mut command = Command::new("git");
-            command.arg("-C").arg(&source_dir);
-            command
-                .arg("submodule")
-                .arg("update")
-                .arg("--init")
-                .arg("--recursive");
-            run_command(command)?;
+                // Update submodules
+                let mut command = Command::new("git");
+                command.arg("-C").arg(&source_dir);
+                command
+                    .arg("submodule")
+                    .arg("update")
+                    .arg("--init")
+                    .arg("--recursive");
+                run_command(command)?;
+            }
 
             // Apply patches
             for patch_name in patches {
