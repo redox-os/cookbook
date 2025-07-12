@@ -1,5 +1,10 @@
-#TODO not compiled or tested
+#TODO camino crate error
 [source]
 git = "https://github.com/http-server-rs/http-server"
 [build]
-template = "cargo"
+template = "custom"
+script = """
+DYNAMIC_INIT
+PACKAGE_PATH=src/file-explorer-ui cookbook_cargo --bin file-explorer-ui
+PACKAGE_PATH=src/http-server cookbook_cargo --bin http-server
+"""
