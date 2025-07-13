@@ -9,13 +9,11 @@ use toml::Value;
 
 fn is_newer(src: &Path, dst: &Path) -> bool {
     match (fs::metadata(src), fs::metadata(dst)) {
-        (Ok(src_meta), Ok(dst_meta)) => {
-            match (src_meta.modified(), dst_meta.modified()) {
-                (Ok(src_time), Ok(dst_time)) => src_time > dst_time,
-                (Ok(_), Err(_)) => true,
-                _ => false,
-            }
-        }
+        (Ok(src_meta), Ok(dst_meta)) => match (src_meta.modified(), dst_meta.modified()) {
+            (Ok(src_time), Ok(dst_time)) => src_time > dst_time,
+            (Ok(_), Err(_)) => true,
+            _ => false,
+        },
         (Ok(_), Err(_)) => true,
         _ => false,
     }
