@@ -13,13 +13,13 @@ dependencies = [
 ]
 script = """
 DYNAMIC_INIT
-unset AR AS CC CXX LD NM OBJCOPY OBJDUMP RANLIB READELF STRIP
-export MAGIC_EXTRA_RUSTFLAGS="-C link-args=-lz"
+export MAGIC_EXTRA_RUSTFLAGS="${LDFLAGS} -C link-args=-lz"
+unset AR AS CC CXX LD LDFLAGS NM OBJCOPY OBJDUMP RANLIB READELF STRIP
 python3 "${COOKBOOK_SOURCE}/x.py" install \
     --config "${COOKBOOK_RECIPE}/config.toml" \
     --jobs $(nproc)
 
-rsync -av --delete "${COOKBOOK_SOURCE}"/install/* "${COOKBOOK_STAGE}/"
+rsync -av --delete "${COOKBOOK_BUILD}"/install/* "${COOKBOOK_STAGE}/"
 # Cannot use STRIP because it is unset previously
 "${HOST}-strip" -v "${COOKBOOK_STAGE}/bin/rustc"
 # TODO: rustdoc
