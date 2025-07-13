@@ -102,9 +102,14 @@ declare -A APPSTREAM_SOURCES
 # 
 # The following adds the package dependencies of the recipes to the repo as
 # well.
-#
-# TODO(?): All of this script can be moved into `cook.rs`.
 recipes="$recipes $(target/release/pkg_deps $toml_recipes)"
+
+REPO_BUILDER="./target/release/repo_builder"
+
+if [ -x "$REPO_BUILDER" ] # TODO: Wait until everyone has this binary
+then
+    "$REPO_BUILDER" "$REPO" $recipes
+else # TODO: Delete this soon
 
 for recipe in $recipes
 do
@@ -149,14 +154,6 @@ fi
 
 echo -e "\033[01;38;5;155mrepo - generating repo.toml\033[0m" >&2
 
-REPO_BUILDER="./target/release/repo_builder"
-
-if [ -x "$REPO_BUILDER" ]
-then
-    "$REPO_BUILDER" "$REPO"
-else
-
-# TODO: Delete this some time (when everyone has the binary)
 echo "[packages]" > "$REPO/repo.toml"
 for toml in "$REPO/"*".toml"
 do
