@@ -1,0 +1,18 @@
+--- source/build/autoconf/config.sub	2025-03-22 17:31:23.488678000 +0100
++++ source/build/autoconf/config.sub	2025-03-22 17:31:58.480171168 +0100
+@@ -153,6 +153,7 @@
+ 			| os2-emx* \
+ 			| rtmk-nova* \
+ 			| storm-chaos* \
++			| redox* \
+ 			| uclinux-gnu* \
+ 			| uclinux-uclibc* \
+ 			| windows-* )
+@@ -2110,6 +2111,7 @@
+ 	| solidbsd* \
+ 	| sortix* \
+ 	| storm-chaos* \
++	| redox* \
+ 	| sunos \
+ 	| sunos[34]* \
+ 	| superux* \
