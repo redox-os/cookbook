@@ -1,4 +1,5 @@
 #TODO Go 1.4 is the last compiling version from CC
+#TODO Still not compiling: duplicate symbol main in runtime and runtime.a(rt0_redox_amd64.)
 #TODO see ../go for guide to compile newer versions
 [source]
 tar = "https://go.dev/dl/go1.4.3.src.tar.gz"

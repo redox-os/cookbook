@@ -1236,3 +1236,15 @@ diff --color -ruwN source/src/net/fd_poll_runtime.go source-new/src/net/fd_poll_
  
  package net
  
+diff --color -ruwN source/src/net/sockoptip_posix.go source-new/src/net/sockoptip_posix.go
+--- source/src/net/sockoptip_posix.go	2015-09-23 11:37:37.000000000 +0700
++++ source-new/src/net/sockoptip_posix.go	2025-07-20 17:36:18.064376795 +0700
+@@ -2,7 +2,7 @@
+ // Use of this source code is governed by a BSD-style
+ // license that can be found in the LICENSE file.
+ 
+-// +build darwin dragonfly freebsd linux netbsd openbsd windows
++// +build darwin dragonfly freebsd linux netbsd openbsd redox windows
+ 
+ package net
+ 
