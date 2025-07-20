@@ -1,6 +1,8 @@
-#TODO missing script for building, see https://go.dev/doc/install/source
-#TODO use the Go frontend from GCC or build the official compiler?
+#TODO Go is self bootstrapping, see https://go.dev/doc/install/source
+#TODO To bootstrap this, compile with patches from go14 recipe as HOST
+#TODO Then compile it again until we get to the latest Go version as TARGET
+#TODO Unfortunately, it's a lot of work. 
 [source]
-tar = "https://go.dev/dl/go1.21.5.src.tar.gz"
+tar = "https://go.dev/dl/go1.24.5.src.tar.gz"
 [build]
 template = "custom"
