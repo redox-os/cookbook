@@ -1,0 +1,11 @@
+--- orgsource/firefox-136.0.2/mozglue/misc/PlatformMutex.h	2025-03-17 18:29:06.000000000 +0100
++++ source/mozglue/misc/PlatformMutex.h	2025-03-22 20:44:38.476374472 +0100
+@@ -48,7 +48,7 @@
+ 
+   PlatformData* platformData();
+ 
+-#if !defined(XP_WIN) && !defined(__wasi__)
++#if !defined(XP_WIN) && !defined(__wasi__) && !defined(__redox__)
+   void* platformData_[sizeof(pthread_mutex_t) / sizeof(void*)];
+   static_assert(sizeof(pthread_mutex_t) / sizeof(void*) != 0 &&
+                     sizeof(pthread_mutex_t) % sizeof(void*) == 0,
