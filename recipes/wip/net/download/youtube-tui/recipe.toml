@@ -1,6 +1,8 @@
-#TODO openssl error
+#TODO can build, not tested
 [source]
 git = "https://github.com/Siriusmart/youtube-tui"
+# Newer versions have rustypipe, which errors with rquickjs-sys
+rev = "e44be82504379c326923c7593c76eb2551bbc7fc"
 [build]
 template = "cargo"
 cargoflags = "--no-default-features"
