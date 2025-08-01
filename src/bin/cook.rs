@@ -1019,10 +1019,14 @@ done
             false => "",
         };
 
-        let flags_fn = |name, flags| {
+        let flags_fn = |name, flags: &Vec<String>| {
             format!(
                 "{name}+=(\n{}\n)\n",
-                flags.iter().map(|s| format!("  \"{s}\"")).join("\n")
+                flags
+                    .iter()
+                    .map(|s| format!("  \"{s}\""))
+                    .collect::<Vec<String>>()
+                    .join("\n")
             )
         };
 
