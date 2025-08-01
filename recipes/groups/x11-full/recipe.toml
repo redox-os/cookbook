@@ -1,0 +1,13 @@
+[package]
+dependencies = [
+    "twm",
+    "xev",
+    "xeyes",
+    "xinit",
+    "xkbcomp",
+    "xkbutils",
+    "xkeyboard-config",
+    "xserver-xorg",
+    "xserver-xorg-video-dummy",
+    "xterm",
+]
