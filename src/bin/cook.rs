@@ -1014,6 +1014,18 @@ do
 done
 "#;
 
+        let dynamic_init_prefix = match recipe.build.dependencies.len() > 0 {
+            true => "DYNAMIC_INIT\n",
+            false => "",
+        };
+
+        let flags_fn = |name, flags| {
+            format!(
+                "{name}+=(\n{}\n)\n",
+                flags.iter().map(|s| format!("  \"{s}\"")).join("\n")
+            )
+        };
+
         //TODO: better integration with redoxer (library instead of binary)
         //TODO: configurable target
         //TODO: Add more configurability, convert scripts to Rust?
@@ -1023,11 +1035,22 @@ done
                 cargoflags,
             } => {
                 format!(
-                    "PACKAGE_PATH={} cookbook_cargo {cargoflags}",
+                    "{dynamic_init_prefix} PACKAGE_PATH={} cookbook_cargo {cargoflags}",
                     package_path.as_deref().unwrap_or(".")
                 )
             }
-            BuildKind::Configure => "cookbook_configure".to_owned(),
+            BuildKind::Configure { configureflags } => format!(
+                "{dynamic_init_prefix}{}cookbook_configure",
+                flags_fn("COOKBOOK_CONFIGURE_FLAGS", configureflags),
+            ),
+            BuildKind::Cmake { cmakeflags } => format!(
+                "{dynamic_init_prefix}{}cookbook_cmake",
+                flags_fn("COOKBOOK_CMAKE_FLAGS", cmakeflags),
+            ),
+            BuildKind::Meson { mesonflags } => format!(
+                "{dynamic_init_prefix}{}cookbook_meson",
+                flags_fn("COOKBOOK_MESON_FLAGS", mesonflags),
+            ),
             BuildKind::Custom { script } => script.clone(),
             BuildKind::None => "".to_owned(),
         };
