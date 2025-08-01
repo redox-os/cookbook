@@ -1,9 +1,7 @@
 [package]
 dependencies = [
-    "xev",
     "xinit",
     "xkbcomp",
-    "xkbutils",
     "xkeyboard-config",
     "xserver-xorg",
     "xserver-xorg-video-dummy",

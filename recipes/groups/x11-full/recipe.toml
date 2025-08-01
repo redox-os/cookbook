@@ -4,5 +4,6 @@ dependencies = [
     "twm",
     "xev",
     "xeyes",
+    "xkbutils",
     "xterm",
 ]
