@@ -13,6 +13,8 @@ DYNAMIC_INIT
 
 COOKBOOK_CONFIGURE_FLAGS+=(
     --enable-lib-only
+    CFLAGS="-fPIC"
+    CXXFLAGS="-fPIC"
 )
 cookbook_configure
 """
