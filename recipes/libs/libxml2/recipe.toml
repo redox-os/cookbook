@@ -15,8 +15,6 @@ dependencies = [
 script = """
 DYNAMIC_INIT
 COOKBOOK_CONFIGURE_FLAGS=(
-    CFLAGS="-fPIC"
-    CXXFLAGS="-fPIC"
     --host="${GNU_TARGET}"
     --prefix="/usr"
     --enable-shared
