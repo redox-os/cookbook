@@ -20,6 +20,8 @@ COOKBOOK_CONFIGURE_FLAGS=(
     --enable-shared=yes
     --enable-static=yes
     --enable-threads=no
+    CFLAGS="-fPIC"
+    CXXFLAGS="-fPIC"
 )
 cookbook_configure
 """
