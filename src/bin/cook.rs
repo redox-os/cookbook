@@ -898,7 +898,7 @@ EOF
         echo "set(CMAKE_CXX_COMPILER_LAUNCHER ${CC_WRAPPER})" >> cross_file.cmake
     fi
 
-    "${COOKBOOK_CMAKE}" "${COOKBOOK_SOURCE}" \
+    "${COOKBOOK_CMAKE}" -S "${COOKBOOK_SOURCE}" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CROSSCOMPILING=True \
         -DCMAKE_INSTALL_INCLUDEDIR=include \
