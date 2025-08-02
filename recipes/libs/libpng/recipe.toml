@@ -18,6 +18,8 @@ COOKBOOK_CONFIGURE_FLAGS=(
     --prefix="/usr"
     --enable-shared
     --enable-static
+    CFLAGS="-fPIC"
+    CXXFLAGS="-fPIC"
 )
 cookbook_configure
 """
