@@ -1,0 +1,13 @@
+[source]
+git = "httpqs://github.com/svenstaro/miniserve"
+# git = "https://gitlab.redox-os.org/redox-os/miniserve"
+[build]
+template = "custom"
+dependencies = [
+    "openssl1",
+    "zlib",
+]
+script = """
+DYNAMIC_INIT
+cookbook_cargo
+"""
