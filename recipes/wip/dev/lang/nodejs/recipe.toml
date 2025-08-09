@@ -43,6 +43,7 @@ COOKBOOK_CONFIGURE_FLAGS=(
   --prefix=${COOKBOOK_STAGE}
   --dest-cpu=${NODE_CPU}
   --dest-os=redox
+  --shared-cares
   --shared-libuv
   --shared-ngtcp2
   --shared-nghttp2
