@@ -1,0 +1,37 @@
+diff '--color=auto' -ruwN source/src/exec.rs source-new/src/exec.rs
+--- source/src/exec.rs	2025-08-09 02:18:39.482990888 -0400
++++ source-new/src/exec.rs	2025-08-16 01:09:59.172036503 -0400
+@@ -33,7 +33,6 @@
+ use crate::nix::{getpid, isatty};
+ use crate::null_terminated_array::OwningNullTerminatedArray;
+ use crate::parser::{Block, BlockId, BlockType, EvalRes, Parser};
+-#[cfg(FISH_USE_POSIX_SPAWN)]
+ use crate::proc::Pid;
+ use crate::proc::{
+     hup_jobs, is_interactive_session, jobs_requiring_warning_on_exit, no_exec,
+diff '--color=auto' -ruwN source/src/libc.c source-new/src/libc.c
+--- source/src/libc.c	2025-08-16 01:09:15.148401336 -0400
++++ source-new/src/libc.c	2025-08-16 01:09:59.148470966 -0400
+@@ -4,7 +4,7 @@
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <stdlib.h>     // MB_CUR_MAX
+-#include <sys/mount.h>  // MNT_LOCAL
++/* #include <sys/mount.h>  // MNT_LOCAL */
+ #include <sys/resource.h>
+ #include <sys/statvfs.h>  // ST_LOCAL
+ #include <unistd.h>       // _CS_PATH, _PC_CASE_SENSITIVE
+diff '--color=auto' -ruwN source/src/path.rs source-new/src/path.rs
+--- source/src/path.rs	2025-08-16 01:09:15.153402770 -0400
++++ source-new/src/path.rs	2025-08-16 01:09:59.180663941 -0400
+@@ -738,7 +738,9 @@
+             crate::libc::ST_LOCAL(),
+             &narrow,
+         );
+-        #[cfg(not(target_os = "netbsd"))]
++        #[cfg(target_os = "redox")]
++        let remoteness = DirRemoteness::unknown;
++        #[cfg(not(target_os = "redox"))]
+         let remoteness = remoteness_via_statfs(
+             libc::statfs,
+             |stat: &libc::statfs| stat.f_flags,
