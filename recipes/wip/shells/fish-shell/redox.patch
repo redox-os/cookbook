@@ -1,0 +1,13 @@
+Binary files source/.git/index and source-new/.git/index differ
+diff '--color=auto' -ruwN source/src/libc.c source-new/src/libc.c
+--- source/src/libc.c	2025-08-09 01:32:19.305687036 -0400
++++ source-new/src/libc.c	2025-08-09 02:11:20.326967747 -0400
+@@ -4,7 +4,7 @@
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <stdlib.h>     // MB_CUR_MAX
+-#include <sys/mount.h>  // MNT_LOCAL
++// #include <sys/mount.h>  // MNT_LOCAL
+ #include <sys/resource.h>
+ #include <sys/statvfs.h>  // ST_LOCAL
+ #include <unistd.h>       // _CS_PATH, _PC_CASE_SENSITIVE
