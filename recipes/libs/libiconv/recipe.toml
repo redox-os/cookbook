@@ -26,6 +26,8 @@ COOKBOOK_CONFIGURE_FLAGS=(
     --enable-shared
     --enable-static
     ac_cv_have_decl_program_invocation_name=no
+    CFLAGS="-fPIC"
+    CXXFLAGS="-fPIC"
 )
 cookbook_configure
 """
