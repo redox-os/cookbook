@@ -1,0 +1,18 @@
+[source]
+git = "https://github.com/ngtcp2/nghttp3"
+rev = "f3eb315feda478cdb4919720a7961c0321e1bd89" # 1.14.0
+script = """
+DYNAMIC_INIT
+autotools_recursive_regenerate
+"""
+
+[build]
+template = "custom"
+script = """
+DYNAMIC_INIT
+
+COOKBOOK_CONFIGURE_FLAGS+=(
+    --enable-lib-only
+)
+cookbook_configure
+"""
