@@ -3,6 +3,7 @@
 # advanced build instructions - https://github.com/servo/servo/wiki/Building#manual-build-setup
 [source]
 git = "https://github.com/servo/servo"
+sha = "f19b2f6e848ad2b4b5fde8969958e37e76844faa"
 #git = "https://gitlab.redox-os.org/redox-os/servo"
 [build]
 template = "custom"
@@ -20,5 +21,6 @@ dependencies = [
     "zlib",
 ]
 script = """
+cp "${COOKBOOK_RECIPE}/.servobuild" "${COOKBOOK_SOURCE}/.servobuild"
 cookbook_cargo_packages servoshell
 """
