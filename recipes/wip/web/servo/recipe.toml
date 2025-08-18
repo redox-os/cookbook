@@ -28,20 +28,30 @@ dependencies = [
     "xextproto",
     "libxau",
     "libpthread-stubs",
+    "fontconfig",
+    "expat",
 ]
 script = """
 cp "${COOKBOOK_RECIPE}/.servobuild" "${COOKBOOK_SOURCE}/.servobuild"
 
 # Add wrapper to PATH
 export PATH="${COOKBOOK_RECIPE}:${PATH}"
-export HOST=x86_64-linux-gnu
+export HOST=x86_64-unknown-linux-gnu
 export TARGET=x86_64-unknown-redox
+
+# Force cargo to use the correct build target
+export CARGO_BUILD_TARGET=x86_64-unknown-redox
 
 # Set up cross-compilation environment for cargo and C dependencies
 export CC_x86_64_unknown_redox=x86_64-unknown-redox-gcc
 export CXX_x86_64_unknown_redox=x86_64-unknown-redox-g++
 export AR_x86_64_unknown_redox=x86_64-unknown-redox-ar
 export CARGO_TARGET_X86_64_UNKNOWN_REDOX_LINKER=x86_64-unknown-redox-gcc
+
+# Also set CC for the default target
+export CC=x86_64-unknown-redox-gcc
+export CXX=x86_64-unknown-redox-g++
+export AR=x86_64-unknown-redox-ar
 
 # jemalloc specific configuration
 export JEMALLOC_SYS_WITH_LG_PAGE=16
@@ -63,9 +73,25 @@ export PKG_CONFIG_LIBDIR="${COOKBOOK_SYSROOT}/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="${COOKBOOK_SYSROOT}"
 
 rsync -a --delete "${COOKBOOK_SOURCE}/" ./
+
+# # Configure cargo for Redox target
+# cat >> .cargo/config.toml << EOF
+
+# [target.x86_64-unknown-redox]
+# linker = "x86_64-unknown-redox-gcc"
+# ar = "x86_64-unknown-redox-ar"
+
+# [build]
+# target = "x86_64-unknown-redox"
+# EOF
+
 # ./mach build -v
 
-cp ${COOKBOOK_SYSROOT}/usr/share/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig -v
+# I'm tired trying figure out why multiple pkgconfig paths are ignored by cargo building stuff
+# cp ${COOKBOOK_SYSROOT}/usr/share/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig -v || true
+# cp ${COOKBOOK_SYSROOT}/usr/lib/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig -v || true
+rsync -a -v ${COOKBOOK_SYSROOT}/usr/share/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
+rsync -a -v ${COOKBOOK_SYSROOT}/usr/lib/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
 
 # ls /mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/sysroot/lib/pkgconfig | grep x11
 # ls /mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/sysroot/usr/lib/pkgconfig | grep x11
