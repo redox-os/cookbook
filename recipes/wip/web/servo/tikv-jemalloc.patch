@@ -1,0 +1,15 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 2dcb622934f..d9b08ba9739 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -155,8 +155,8 @@ surfman = { git = "https://github.com/servo/surfman", rev = "f7688b4585f9e0b5d4b
+ syn = { version = "2", default-features = false, features = ["clone-impls", "derive", "parsing"] }
+ synstructure = "0.13"
+ taffy = { version = "0.9", default-features = false, features = ["calc", "detailed_layout_info", "grid", "std"] }
+-tikv-jemalloc-sys = "0.6.0"
+-tikv-jemallocator = "0.6.0"
++tikv-jemalloc-sys = { version = "0.6.0", git = "https://gitlab.redox-os.org/njskalski/jemallocator.git", branch = "redox_mods" }
++tikv-jemallocator = { version = "0.6.0", git = "https://gitlab.redox-os.org/njskalski/jemallocator.git", branch = "redox_mods" }
+ time = { package = "time", version = "0.3", features = ["large-dates", "local-offset", "serde"] }
+ tokio = "1"
+ tokio-rustls = { version = "0.26", default-features = false, features = ["logging"] }
