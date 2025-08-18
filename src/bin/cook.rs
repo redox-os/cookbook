@@ -1014,11 +1014,6 @@ do
 done
 "#;
 
-        let dynamic_init_prefix = match recipe.build.dependencies.len() > 0 {
-            true => "DYNAMIC_INIT\n",
-            false => "",
-        };
-
         let flags_fn = |name, flags: &Vec<String>| {
             format!(
                 "{name}+=(\n{}\n)\n",
@@ -1039,20 +1034,20 @@ done
                 cargoflags,
             } => {
                 format!(
-                    "{dynamic_init_prefix} PACKAGE_PATH={} cookbook_cargo {cargoflags}",
+                    "PACKAGE_PATH={} cookbook_cargo {cargoflags}",
                     package_path.as_deref().unwrap_or(".")
                 )
             }
             BuildKind::Configure { configureflags } => format!(
-                "{dynamic_init_prefix}{}cookbook_configure",
+                "DYNAMIC_INIT\n{}cookbook_configure",
                 flags_fn("COOKBOOK_CONFIGURE_FLAGS", configureflags),
             ),
             BuildKind::Cmake { cmakeflags } => format!(
-                "{dynamic_init_prefix}{}cookbook_cmake",
+                "DYNAMIC_INIT\n{}cookbook_cmake",
                 flags_fn("COOKBOOK_CMAKE_FLAGS", cmakeflags),
             ),
             BuildKind::Meson { mesonflags } => format!(
-                "{dynamic_init_prefix}{}cookbook_meson",
+                "DYNAMIC_INIT\n{}cookbook_meson",
                 flags_fn("COOKBOOK_MESON_FLAGS", mesonflags),
             ),
             BuildKind::Custom { script } => script.clone(),
