@@ -5,6 +5,7 @@ shopt -s nullglob
 source config.sh
 
 APPSTREAM="0"
+COOK_OPT=""
 recipes=""
 for arg in "${@:1}"
 do
@@ -14,6 +15,9 @@ do
     elif [ "$arg" == "--debug" ]
     then
         DEBUG=--debug
+    elif [ "$arg" == "--with-package-deps" ]
+    then
+        COOK_OPT=--with-package-deps
     elif [ "$arg" == "--nonstop" ]
     then
         set +e
@@ -46,7 +50,7 @@ do
     if [ -e "${COOKBOOK_RECIPE}/recipe.toml" ]
     then
         toml_recipes+=" $recipe"
-        target/release/cook "$recipe"
+        target/release/cook $COOK_OPT "$recipe"
         continue
     fi
 
@@ -98,71 +102,10 @@ declare -A APPSTREAM_SOURCES
 
 # Currently, we only support runtime dependencies for recipes in the new TOML
 # format. Runtime dependencies include both `[package.dependencies]` and
-# [`package.shared_deps`].
+# dynamically linked packages discovered by auto_deps.
 # 
 # The following adds the package dependencies of the recipes to the repo as
 # well.
 recipes="$recipes $(target/release/pkg_deps $toml_recipes)"
 
-REPO_BUILDER="./target/release/repo_builder"
-
-if [ -x "$REPO_BUILDER" ] # TODO: Wait until everyone has this binary
-then
-    "$REPO_BUILDER" "$REPO" $recipes
-else # TODO: Delete this soon
-
-for recipe in $recipes
-do
-    recipe_path=`target/release/find_recipe $recipe`
-    COOKBOOK_RECIPE="$recipe_path"
-    TARGET_DIR="${COOKBOOK_RECIPE}/target/${TARGET}"
-    COOKBOOK_STAGE="${TARGET_DIR}/stage"
-
-    if [ "${COOKBOOK_STAGE}.pkgar" -nt "$REPO/$recipe.pkgar" ]
-    then
-        echo -e "\033[01;38;5;155mrepo - publishing $recipe\033[0m" >&2
-        cp -v "${COOKBOOK_STAGE}.pkgar" "$REPO/$recipe.pkgar"
-        cp -v "${COOKBOOK_STAGE}.toml" "$REPO/$recipe.toml"
-    fi
-
-    if [ -e "${COOKBOOK_STAGE}/usr/share/metainfo" ]
-    then
-        APPSTREAM_SOURCES["$recipe"]="${COOKBOOK_STAGE}"
-    fi
-done
-
-if [ "${APPSTREAM}" == "1" ]
-then
-    echo -e "\033[01;38;5;155mrepo - generating appstream data\033[0m" >&2
-
-    APPSTREAM_ROOT="$ROOT/build/${TARGET}/appstream"
-    APPSTREAM_PKG="$REPO/appstream.pkgar"
-    rm -rf "${APPSTREAM_ROOT}" "${APPSTREAM_PKG}"
-    mkdir -p "${APPSTREAM_ROOT}"
-    if [ "${#APPSTREAM_SOURCES[@]}" -ne 0 ]
-    then
-        appstreamcli compose \
-            --origin=pkgar \
-            --result-root="${APPSTREAM_ROOT}" \
-            "${APPSTREAM_SOURCES[@]}"
-    fi
-    pkgar create \
-        --archive "${APPSTREAM_PKG}" \
-        --skey "${ROOT}/build/id_ed25519.toml" \
-        "${APPSTREAM_ROOT}"
-fi
-
-echo -e "\033[01;38;5;155mrepo - generating repo.toml\033[0m" >&2
-
-echo "[packages]" > "$REPO/repo.toml"
-for toml in "$REPO/"*".toml"
-do
-    package="$(basename "$toml" .toml)"
-    if [ "$package" != "repo" ]
-    then
-        version="$(grep version "$toml" | cut -d '=' -f2-)"
-        echo "$package =$version" >> "$REPO/repo.toml"
-    fi
-done
-
-fi
+target/release/repo_builder "$REPO" $recipes
