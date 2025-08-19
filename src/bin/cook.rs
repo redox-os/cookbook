@@ -897,8 +897,13 @@ EOF
         echo "set(CMAKE_C_COMPILER_LAUNCHER ${CC_WRAPPER})" >> cross_file.cmake
         echo "set(CMAKE_CXX_COMPILER_LAUNCHER ${CC_WRAPPER})" >> cross_file.cmake
     fi
+    local SOURCE_DIR="${COOKBOOK_SOURCE}"
+    if [[ -n "$1" && "$1" != -* ]]; then
+        SOURCE_DIR="$1"
+        shift
+    fi
 
-    "${COOKBOOK_CMAKE}" "${COOKBOOK_SOURCE}" \
+    "${COOKBOOK_CMAKE}" -S "${SOURCE_DIR}" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CROSSCOMPILING=True \
         -DCMAKE_INSTALL_INCLUDEDIR=include \
