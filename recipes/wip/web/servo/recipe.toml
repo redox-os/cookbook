@@ -2,12 +2,17 @@
 # if the script is wrong, read this - https://github.com/servo/servo#release-build
 # advanced build instructions - https://github.com/servo/servo/wiki/Building#manual-build-setup
 [source]
-git = "https://github.com/servo/servo"
-sha = "f19b2f6e848ad2b4b5fde8969958e37e76844faa"
-patches = [
-    "full-cargo-toml.patch",
-]
-#git = "https://gitlab.redox-os.org/redox-os/servo"
+# git = "https://github.com/servo/servo"
+# sha = "f19b2f6e848ad2b4b5fde8969958e37e76844faa"
+# patches = [
+    # "full-cargo-toml.patch",
+# ]
+git = "https://gitlab.redox-os.org/njskalski/servo.git"
+rev = "6da81021b9a91994a0f21278c8e5016550a04c01" # for some reason I have to point to exact SHA, because just naming branch doesn't work.
+
+#
+#
+
 [build]
 template = "custom"
 dependencies = [
@@ -101,6 +106,6 @@ rsync -a -v ${COOKBOOK_SYSROOT}/usr/lib/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/p
 ls -al /mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/sysroot/lib/pkgconfig
 
 # -j 1 to lock down "which crate fails", because cargo tree -i doesn't work for gaol
-cargo build --target x86_64-unknown-redox -j 1
+cargo build --target x86_64-unknown-redox
 
 """
