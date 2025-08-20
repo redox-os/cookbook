@@ -8,7 +8,7 @@
     # "full-cargo-toml.patch",
 # ]
 git = "https://gitlab.redox-os.org/njskalski/servo.git"
-rev = "49f5a6952b604a7feb1455daa946ce9d763fa529" # for some reason I have to point to exact SHA, because just naming branch doesn't work.
+rev = "67dcba6a14894fbcbf23172a1fe526849a4a08e1" # for some reason I have to point to exact SHA, because just naming branch doesn't work.
 
 #
 #
