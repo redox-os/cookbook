@@ -15,6 +15,6 @@ dependencies = [
 script = """
 DYNAMIC_INIT
 cookbook_configure
-mv "${COOKBOOK_STAGE}"/usr/sbin/sshd " ${COOKBOOK_STAGE}"/usr/bin/sshd
+mv "${COOKBOOK_STAGE}"/usr/sbin/sshd" ${COOKBOOK_STAGE}"/usr/bin/sshd
 rmdir "${COOKBOOK_STAGE}"/usr/sbin
 """
