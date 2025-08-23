@@ -1,0 +1,197 @@
+diff '--color=auto' -ruwN source/Cargo.toml source-new/Cargo.toml
+--- source/Cargo.toml	2025-08-23 02:58:05.890793970 -0400
++++ source-new/Cargo.toml	2025-08-23 02:58:38.083791565 -0400
+@@ -35,12 +35,12 @@
+ 
+ bitflags = "2.5.0"
+ errno = "0.3.0"
+-libc = "0.2"
++libc = { git = "https://github.com/joshuamegnauth54/libc", branch = "resource-consts-for-nix" }
+ # lru pulls in hashbrown by default, which uses a faster (though less DoS resistant) hashing algo.
+ # disabling default features uses the stdlib instead, but it doubles the time to rewrite the history
+ # files as of 22 April 2024.
+ lru = "0.13.0"
+-nix = { version = "0.30.1", default-features = false, features = [
++nix = { git = "https://github.com/joshuamegnauth54/nix", branch = "redox-fish-no-merge", default-features = false, features = [
+     "event",
+     "inotify",
+     "resource",
+diff '--color=auto' -ruwN source/src/exec.rs source-new/src/exec.rs
+--- source/src/exec.rs	2025-08-23 02:58:05.664350131 -0400
++++ source-new/src/exec.rs	2025-08-23 02:58:21.010729216 -0400
+@@ -33,7 +33,6 @@
+ use crate::nix::{getpid, isatty};
+ use crate::null_terminated_array::OwningNullTerminatedArray;
+ use crate::parser::{Block, BlockId, BlockType, EvalRes, Parser};
+-#[cfg(FISH_USE_POSIX_SPAWN)]
+ use crate::proc::Pid;
+ use crate::proc::{
+     hup_jobs, is_interactive_session, jobs_requiring_warning_on_exit, no_exec,
+@@ -390,7 +389,7 @@
+ ) -> ! {
+     // This function never returns, so we take certain liberties with constness.
+ 
+-    unsafe { libc::execve(actual_cmd.as_ptr(), argv.get(), envv.get()) };
++    unsafe { libc::execve(actual_cmd.as_ptr(), argv.get().cast(), envv.get().cast()) };
+     let err = errno();
+ 
+     // The shebang wasn't introduced until UNIX Seventh Edition, so if
+@@ -413,7 +412,11 @@
+             // not what we would pass as argv0.
+             argv2[1] = actual_cmd.as_ptr();
+             unsafe {
+-                libc::execve(_PATH_BSHELL.load(Ordering::Relaxed), &argv2[0], envv.get());
++                libc::execve(
++                    _PATH_BSHELL.load(Ordering::Relaxed),
++                    argv2.as_ptr().cast(),
++                    envv.get().cast(),
++                );
+             }
+         }
+     }
+diff '--color=auto' -ruwN source/src/fork_exec/postfork.rs source-new/src/fork_exec/postfork.rs
+--- source/src/fork_exec/postfork.rs	2025-08-23 02:58:05.920802397 -0400
++++ source-new/src/fork_exec/postfork.rs	2025-08-23 02:58:21.022251384 -0400
+@@ -339,7 +339,9 @@
+                             "', which is not an executable command."
+                         );
+                     }
+-                } else if md.unwrap().mode() & u32::from(libc::S_IFMT) == u32::from(libc::S_IFDIR) {
++                } else if md.unwrap().mode() & u32::try_from(libc::S_IFMT).unwrap()
++                    == u32::try_from(libc::S_IFDIR).unwrap()
++                {
+                     FLOG_SAFE!(
+                         exec,
+                         "Failed to execute process '",
+diff '--color=auto' -ruwN source/src/input_common.rs source-new/src/input_common.rs
+--- source/src/input_common.rs	2025-08-23 02:58:05.920802397 -0400
++++ source-new/src/input_common.rs	2025-08-23 02:58:21.013870474 -0400
+@@ -590,6 +590,7 @@
+     const NSEC_PER_MSEC: u64 = 1000 * 1000;
+     const NSEC_PER_SEC: u64 = NSEC_PER_MSEC * 1000;
+     let wait_nsec: u64 = (timeout.as_millis() as u64) * NSEC_PER_MSEC;
++    #[not(cfg(target_os = "redox"))]
+     let timeout = libc::timespec {
+         tv_sec: (wait_nsec / NSEC_PER_SEC).try_into().unwrap(),
+         tv_nsec: (wait_nsec % NSEC_PER_SEC).try_into().unwrap(),
+@@ -605,6 +606,7 @@
+         libc::FD_SET(in_fd, &mut fdset);
+     }
+ 
++    #[cfg(not(target_os = "redox"))]
+     let res = unsafe {
+         libc::pselect(
+             in_fd + 1,
+@@ -616,6 +618,31 @@
+         )
+     };
+ 
++    #[cfg(target_os = "redox")]
++    let res = unsafe {
++        //HACK: pselect does this atomically
++        let mut saved = MaybeUninit::uninit();
++        let mut saved = unsafe {
++            libc::sigfillset(saved.as_mut_ptr());
++            saved.assume_init()
++        };
++        libc::sigprocmask(libc::SIG_SETMASK, &sigs, &mut saved);
++        let timeout = libc::timeval {
++            tv_sec: timeout.as_secs(),
++            tv_usec: timeout.subsecs_micros(),
++        };
++        let res = libc::select(
++            in_fd + 1,
++            &mut fdset,
++            ptr::null_mut(),
++            ptr::null_mut(),
++            &timeout,
++        );
++        libc::sigprocmask(libc::SIG_SETMASK, &saved, ptr::null_mut());
++
++        res
++    };
++
+     // Prevent signal starvation on WSL causing the `torn_escapes.py` test to fail
+     if is_windows_subsystem_for_linux(WSL::V1) {
+         // Merely querying the current thread's sigmask is sufficient to deliver a pending signal
+diff '--color=auto' -ruwN source/src/libc.c source-new/src/libc.c
+--- source/src/libc.c	2025-08-23 02:58:05.666731044 -0400
++++ source-new/src/libc.c	2025-08-23 02:58:20.988033888 -0400
+@@ -4,7 +4,7 @@
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <stdlib.h>     // MB_CUR_MAX
+-#include <sys/mount.h>  // MNT_LOCAL
++/* #include <sys/mount.h>  // MNT_LOCAL */
+ #include <sys/resource.h>
+ #include <sys/statvfs.h>  // ST_LOCAL
+ #include <unistd.h>       // _CS_PATH, _PC_CASE_SENSITIVE
+diff '--color=auto' -ruwN source/src/path.rs source-new/src/path.rs
+--- source/src/path.rs	2025-08-23 02:58:05.667731324 -0400
++++ source-new/src/path.rs	2025-08-23 02:58:21.016921145 -0400
+@@ -738,7 +738,9 @@
+             crate::libc::ST_LOCAL(),
+             &narrow,
+         );
+-        #[cfg(not(target_os = "netbsd"))]
++        #[cfg(target_os = "redox")]
++        let remoteness = DirRemoteness::unknown;
++        #[cfg(not(target_os = "redox"))]
+         let remoteness = remoteness_via_statfs(
+             libc::statfs,
+             |stat: &libc::statfs| stat.f_flags,
+diff '--color=auto' -ruwN source/src/wutil/dir_iter.rs source-new/src/wutil/dir_iter.rs
+--- source/src/wutil/dir_iter.rs	2025-08-23 02:58:05.674024624 -0400
++++ source-new/src/wutil/dir_iter.rs	2025-08-23 02:58:21.026525938 -0400
+@@ -11,6 +11,8 @@
+ use std::io;
+ use std::mem::MaybeUninit;
+ use std::os::fd::RawFd;
++#[cfg(target_os = "redox")]
++use std::path::Path;
+ use std::ptr::{addr_of, NonNull};
+ use std::rc::Rc;
+ 
+@@ -49,6 +51,9 @@
+ 
+     // fd of the DIR*, used for fstatat().
+     dirfd: Rc<DirFd>,
++
++    #[cfg(target_os = "redox")]
++    pub path: WString,
+ }
+ 
+ impl DirEntry {
+@@ -102,9 +107,30 @@
+         if fd < 0 {
+             return;
+         }
+-        let narrow = wcs2zstring(&self.name);
++        #[cfg(not(target_os = "redox"))]
++        let to_narrow = &self.name;
++        #[cfg(target_os = "redox")]
++        let path_yucky = Path::new(wcs2zstring(&self.path)).join(wcs2zstring(&self.name));
++        #[cfg(target_os = "redox")]
++        let Some(to_narrow_owned) = path_yucky.to_str().map(WString::from_str) else {
++            return;
++        };
++        #[cfg(target_os = "redox")]
++        let to_narrow = &to_narrow_owned;
++        let narrow = wcs2zstring(to_narrow);
+         let mut s = MaybeUninit::uninit();
+-        if unsafe { libc::fstatat(fd, narrow.as_ptr(), s.as_mut_ptr(), 0) } == 0 {
++        let fstat_res = {
++            #[cfg(not(target_os = "redox"))]
++            unsafe {
++                libc::fstatat(fd, narrow.as_ptr(), s.as_mut_ptr(), 0)
++            }
++
++            #[cfg(target_os = "redox")]
++            unsafe {
++                libc::stat(narrow.as_ptr(), s.as_mut_ptr())
++            }
++        };
++        if fstat_res == 0 {
+             let s = unsafe { s.assume_init() };
+             // st_dev is a dev_t, which is i32 on OpenBSD/Haiku and u32 in FreeBSD 11
+             #[allow(clippy::unnecessary_cast)]
