@@ -2,8 +2,17 @@
 # if the script is wrong, read this - https://github.com/servo/servo#release-build
 # advanced build instructions - https://github.com/servo/servo/wiki/Building#manual-build-setup
 [source]
-git = "https://github.com/servo/servo"
-#git = "https://gitlab.redox-os.org/redox-os/servo"
+# git = "https://github.com/servo/servo"
+# sha = "f19b2f6e848ad2b4b5fde8969958e37e76844faa"
+# patches = [
+    # "full-cargo-toml.patch",
+# ]
+git = "https://gitlab.redox-os.org/njskalski/servo.git"
+rev = "546ff0b32649803f3a160234a091eb6b96b727d5" # for some reason I have to point to exact SHA, because just naming branch doesn't work.
+
+#
+#
+
 [build]
 template = "custom"
 dependencies = [
@@ -14,11 +23,67 @@ dependencies = [
     "harfbuzz",
     "libffi",
     "libiconv",
+    "libx11",
+    "libxcb",
     "libpng",
     "openssl1",
     "pcre",
     "zlib",
+
+    "x11proto",
+    "x11proto-kb",
+    "xcb-proto",
+    "xextproto",
+    "libxau",
+    "libpthread-stubs",
+    "fontconfig",
+    "expat",
+    "relibc",
 ]
 script = """
-cookbook_cargo_packages servoshell
+cp "${COOKBOOK_RECIPE}/.servobuild" "${COOKBOOK_SOURCE}/.servobuild"
+
+# Add wrapper to PATH
+export PATH="${COOKBOOK_RECIPE}:${PATH}"
+export HOST=x86_64-unknown-linux-gnu
+export TARGET=x86_64-unknown-redox
+
+# Force cargo to use the correct build target
+export CARGO_BUILD_TARGET=x86_64-unknown-redox
+
+# Set up cross-compilation environment for cargo and C dependencies
+export CC_x86_64_unknown_redox=x86_64-unknown-redox-gcc
+export CXX_x86_64_unknown_redox=x86_64-unknown-redox-g++
+export AR_x86_64_unknown_redox=x86_64-unknown-redox-ar
+# export AS_x86_64_unknown_redox=x86_64-unknown-redox-as
+export CARGO_TARGET_X86_64_UNKNOWN_REDOX_LINKER=x86_64-unknown-redox-gcc
+
+# jemalloc specific configuration
+export JEMALLOC_SYS_WITH_LG_PAGE=16
+export TARGET_CC=x86_64-unknown-redox-gcc
+export TARGET_CXX=x86_64-unknown-redox-g++
+export TARGET_AR=x86_64-unknown-redox-ar
+
+export PKG_CONFIG_ALLOW_CROSS=1
+
+# this /usr/share/pkgconfig comes from x11proto, that stages pc files in wrong dir.
+export PKG_CONFIG_PATH="${COOKBOOK_SYSROOT}/lib/pkgconfig"
+#:${COOKBOOK_SYSROOT}/usr/lib/pkgconfig:${COOKBOOK_SYSROOT}/usr/share/pkgconfig"
+export PKG_CONFIG_LIBDIR="${COOKBOOK_SYSROOT}/lib/pkgconfig"
+#:${COOKBOOK_SYSROOT}/usr/lib/pkgconfig"
+export PKG_CONFIG_SYSROOT_DIR="${COOKBOOK_SYSROOT}"
+
+rsync -a --delete "${COOKBOOK_SOURCE}/" ./
+
+
+# I'm tired trying figure out why multiple pkgconfig paths are ignored by cargo building stuff
+rsync -a -v ${COOKBOOK_SYSROOT}/usr/share/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
+rsync -a -v ${COOKBOOK_SYSROOT}/usr/lib/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
+
+ls -al /mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/sysroot/lib/pkgconfig
+
+# -j 1 to lock down "which crate fails", because cargo tree -i doesn't work for gaol
+cargo build --target x86_64-unknown-redox
+
+
 """

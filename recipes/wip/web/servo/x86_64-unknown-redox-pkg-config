@@ -1,0 +1,82 @@
+#!/bin/bash
+# Wrapper script to use regular pkg-config for Redox cross-compilation
+
+# Log file in the build directory
+LOGFILE="/mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/build/pkg-config-wrapper.log"
+
+# Debug output to both stderr and log file
+{
+    echo "========================================="
+    echo "[PKG-CONFIG-WRAPPER] Called at $(date)"
+    echo "[PKG-CONFIG-WRAPPER] Called with args: $@"
+    echo "[PKG-CONFIG-WRAPPER] PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+    echo "[PKG-CONFIG-WRAPPER] PKG_CONFIG_LIBDIR: $PKG_CONFIG_LIBDIR"
+    echo "[PKG-CONFIG-WRAPPER] PKG_CONFIG_SYSROOT_DIR: $PKG_CONFIG_SYSROOT_DIR"
+    
+    # List available .pc files
+    echo "[PKG-CONFIG-WRAPPER] Available .pc files in PKG_CONFIG_LIBDIR:"
+    if [ -d "$PKG_CONFIG_LIBDIR" ]; then
+        ls -1 "$PKG_CONFIG_LIBDIR"/*.pc 2>/dev/null | xargs -n1 basename | sed 's/\.pc$//' | sed 's/^/   - /'
+    else
+        echo "   WARNING: PKG_CONFIG_LIBDIR directory does not exist!"
+    fi
+} >> "$LOGFILE" 2>&1
+
+# Set up cross-compilation environment
+export CC=x86_64-unknown-redox-gcc
+export CXX=x86_64-unknown-redox-g++
+export AR=x86_64-unknown-redox-ar
+export TARGET=x86_64-unknown-redox
+export HOST=x86_64-unknown-linux-gnu
+
+# Set target-specific variables for cargo
+export CC_x86_64_unknown_redox=x86_64-unknown-redox-gcc
+export CXX_x86_64_unknown_redox=x86_64-unknown-redox-g++
+export AR_x86_64_unknown_redox=x86_64-unknown-redox-ar
+export CARGO_TARGET_X86_64_UNKNOWN_REDOX_LINKER=x86_64-unknown-redox-gcc
+
+# jemalloc specific configuration
+export JEMALLOC_SYS_WITH_LG_PAGE=16
+export TARGET_CC=x86_64-unknown-redox-gcc
+export TARGET_CXX=x86_64-unknown-redox-g++
+export TARGET_AR=x86_64-unknown-redox-ar
+
+# Run pkg-config and capture output
+OUTPUT=$(pkg-config "$@" 2>&1)
+EXIT_CODE=$?
+
+# Log the result
+{
+    echo "[PKG-CONFIG-WRAPPER] pkg-config exit code: $EXIT_CODE"
+    echo "[PKG-CONFIG-WRAPPER] pkg-config output:"
+    echo "$OUTPUT" | sed 's/^/   /'
+} >> "$LOGFILE" 2>&1
+
+# If there was an error, log detailed diagnostics
+if [ $EXIT_CODE -ne 0 ]; then
+    {
+        echo "[PKG-CONFIG-WRAPPER] ERROR: pkg-config failed!"
+        
+        # Check for common issues
+        if echo "$OUTPUT" | grep -q "was not found"; then
+            MISSING_PKG=$(echo "$OUTPUT" | grep -o "Package '[^']*'" | sed "s/Package '//;s/'//" | head -1)
+            echo "[PKG-CONFIG-WRAPPER] Missing package: $MISSING_PKG"
+            echo "[PKG-CONFIG-WRAPPER] Checking if .pc file exists in sysroot..."
+            find $PKG_CONFIG_LIBDIR -name "${MISSING_PKG}.pc" 2>/dev/null | sed 's/^/   Found: /'
+            
+            # Check the content of fontconfig.pc if that's what we're looking for
+            if [[ "$@" == *"fontconfig"* ]] && [ -f "$PKG_CONFIG_LIBDIR/fontconfig.pc" ]; then
+                echo "[PKG-CONFIG-WRAPPER] fontconfig.pc exists! Content:"
+                cat "$PKG_CONFIG_LIBDIR/fontconfig.pc" | sed 's/^/   /'
+            fi
+        fi
+    } >> "$LOGFILE" 2>&1
+    
+    # Re-output to stdout for the build system
+    echo "$OUTPUT"
+    exit $EXIT_CODE
+else
+    # Success - output normally
+    echo "$OUTPUT"
+    exit 0
+fi
