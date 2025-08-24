@@ -8,7 +8,7 @@
     # "full-cargo-toml.patch",
 # ]
 git = "https://gitlab.redox-os.org/njskalski/servo.git"
-rev = "e84bacfae919a5fbe3acc9a6d527be83c9a4aaf0" # for some reason I have to point to exact SHA, because just naming branch doesn't work.
+rev = "546ff0b32649803f3a160234a091eb6b96b727d5" # for some reason I have to point to exact SHA, because just naming branch doesn't work.
 
 #
 #
@@ -38,6 +38,7 @@ dependencies = [
     "libpthread-stubs",
     "fontconfig",
     "expat",
+    "relibc",
 ]
 script = """
 cp "${COOKBOOK_RECIPE}/.servobuild" "${COOKBOOK_SOURCE}/.servobuild"
@@ -54,15 +55,8 @@ export CARGO_BUILD_TARGET=x86_64-unknown-redox
 export CC_x86_64_unknown_redox=x86_64-unknown-redox-gcc
 export CXX_x86_64_unknown_redox=x86_64-unknown-redox-g++
 export AR_x86_64_unknown_redox=x86_64-unknown-redox-ar
-export AS_x86_64_unknown_redox=x86_64-unknown-redox-as
+# export AS_x86_64_unknown_redox=x86_64-unknown-redox-as
 export CARGO_TARGET_X86_64_UNKNOWN_REDOX_LINKER=x86_64-unknown-redox-gcc
-
-# Also set CC for the default target
-# export CC=x86_64-unknown-redox-gcc
-# export CXX=x86_64-unknown-redox-g++
-# export AR=x86_64-unknown-redox-ar
-# export AS=x86_64-unknown-redox-as
-
 
 # jemalloc specific configuration
 export JEMALLOC_SYS_WITH_LG_PAGE=16
@@ -71,10 +65,6 @@ export TARGET_CXX=x86_64-unknown-redox-g++
 export TARGET_AR=x86_64-unknown-redox-ar
 
 export PKG_CONFIG_ALLOW_CROSS=1
-
-#EXPAT_NO_PKG_CONFIG=1 FREETYPE2_NO_PKG_CONFIG=1 FONTCONFIG_NO_PKG_CONFIG=1
-#TOOLCHAIN_PREFIX="${PWD}/toolchain/cctools/bin/x86_64-apple-darwin10-" \
-#CMAKE_TOOLCHAIN_FILE="${PWD}/cmake-toolchain"
 
 # this /usr/share/pkgconfig comes from x11proto, that stages pc files in wrong dir.
 export PKG_CONFIG_PATH="${COOKBOOK_SYSROOT}/lib/pkgconfig"
@@ -85,30 +75,15 @@ export PKG_CONFIG_SYSROOT_DIR="${COOKBOOK_SYSROOT}"
 
 rsync -a --delete "${COOKBOOK_SOURCE}/" ./
 
-# # Configure cargo for Redox target
-# cat >> .cargo/config.toml << EOF
-
-# [target.x86_64-unknown-redox]
-# linker = "x86_64-unknown-redox-gcc"
-# ar = "x86_64-unknown-redox-ar"
-
-# [build]
-# target = "x86_64-unknown-redox"
-# EOF
-
-# ./mach build -v
 
 # I'm tired trying figure out why multiple pkgconfig paths are ignored by cargo building stuff
-# cp ${COOKBOOK_SYSROOT}/usr/share/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig -v || true
-# cp ${COOKBOOK_SYSROOT}/usr/lib/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig -v || true
 rsync -a -v ${COOKBOOK_SYSROOT}/usr/share/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
 rsync -a -v ${COOKBOOK_SYSROOT}/usr/lib/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
 
-# ls /mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/sysroot/lib/pkgconfig | grep x11
-# ls /mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/sysroot/usr/lib/pkgconfig | grep x11
 ls -al /mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/sysroot/lib/pkgconfig
 
 # -j 1 to lock down "which crate fails", because cargo tree -i doesn't work for gaol
 cargo build --target x86_64-unknown-redox
+
 
 """
