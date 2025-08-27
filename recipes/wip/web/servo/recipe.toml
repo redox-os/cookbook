@@ -8,8 +8,8 @@
     # "full-cargo-toml.patch",
 # ]
 git = "https://gitlab.redox-os.org/njskalski/servo.git"
-rev = "546ff0b32649803f3a160234a091eb6b96b727d5" # for some reason I have to point to exact SHA, because just naming branch doesn't work.
-
+# rev = "b722aba1ed82f2cf7a97a3d04dc4aa88d6f6dd56" # for some reason I have to point to exact SHA, because just naming branch doesn't work.
+branch = "redox_mods"
 #
 #
 
@@ -39,6 +39,7 @@ dependencies = [
     "fontconfig",
     "expat",
     "relibc",
+    "gcc13",
 ]
 script = """
 cp "${COOKBOOK_RECIPE}/.servobuild" "${COOKBOOK_SOURCE}/.servobuild"
@@ -80,7 +81,8 @@ rsync -a --delete "${COOKBOOK_SOURCE}/" ./
 rsync -a -v ${COOKBOOK_SYSROOT}/usr/share/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
 rsync -a -v ${COOKBOOK_SYSROOT}/usr/lib/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
 
-ls -al /mnt/redox/cookbook/recipes/wip/web/servo/target/x86_64-unknown-redox/sysroot/lib/pkgconfig
+echo "listing ${COOKBOOK_SYSROOT}/lib/pkgconfig"
+ls -al ${COOKBOOK_SYSROOT}/lib/pkgconfig
 
 # -j 1 to lock down "which crate fails", because cargo tree -i doesn't work for gaol
 cargo build --target x86_64-unknown-redox
