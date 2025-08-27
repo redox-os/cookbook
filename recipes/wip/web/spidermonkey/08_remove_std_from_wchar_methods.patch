@@ -1,0 +1,47 @@
+--- orgsource/firefox-136.0.2/js/src/vm/CharacterEncoding.cpp	2025-03-17 18:29:04.000000000 +0100
++++ source/js/src/vm/CharacterEncoding.cpp	2025-03-23 13:17:34.633944291 +0100
+@@ -648,7 +648,7 @@
+   //       `chars` for the subsequent call.  See bug 1492090.
+   const char* tmpChars = chars;
+ 
+-  size_t wideLen = std::mbsrtowcs(nullptr, &tmpChars, 0, &mb);
++  size_t wideLen = mbsrtowcs(nullptr, &tmpChars, 0, &mb);
+   if (wideLen == size_t(-1)) {
+     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                               JSMSG_CANT_CONVERT_TO_WIDE);
+@@ -665,7 +665,7 @@
+   }
+ 
+   mozilla::DebugOnly<size_t> actualLen =
+-      std::mbsrtowcs(wideChars.get(), &chars, bufLen, &mb);
++      mbsrtowcs(wideChars.get(), &chars, bufLen, &mb);
+   MOZ_ASSERT(wideLen == actualLen);
+   MOZ_ASSERT(wideChars[actualLen] == '\0');
+ 
+@@ -680,7 +680,7 @@
+   // Use the standard codecvt facet to convert a wide string to UTF-8.
+   std::codecvt_utf8<wchar_t> cv;
+ 
+-  size_t len = std::wcslen(chars);
++  size_t len = wcslen(chars);
+   CheckedSizeT utf8MaxLen = CheckedSizeT(len) * cv.max_length();
+   CheckedSizeT utf8BufLen = utf8MaxLen + 1;
+   if (!utf8BufLen.isValid()) {
+@@ -772,7 +772,7 @@
+ 
+   const wchar_t* cWideChars = wideChars.get();
+   std::mbstate_t mb{};
+-  size_t narrowLen = std::wcsrtombs(nullptr, &cWideChars, 0, &mb);
++  size_t narrowLen = wcsrtombs(nullptr, &cWideChars, 0, &mb);
+   if (narrowLen == size_t(-1)) {
+     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                               JSMSG_CANT_CONVERT_TO_NARROW);
+@@ -789,7 +789,7 @@
+   }
+ 
+   mozilla::DebugOnly<size_t> actualLen =
+-      std::wcsrtombs(narrow.get(), &cWideChars, bufLen, &mb);
++      wcsrtombs(narrow.get(), &cWideChars, bufLen, &mb);
+   MOZ_ASSERT(narrowLen == actualLen);
+   MOZ_ASSERT(narrow[actualLen] == '\0');
+ 
