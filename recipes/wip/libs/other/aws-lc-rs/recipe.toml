@@ -1,0 +1,32 @@
+[source]
+git = "https://gitlab.redox-os.org/njskalski/aws-lc-rs.git"
+branch = "redox_mods"
+[build]
+template = "custom"
+
+dependencies = [
+
+]
+
+script = """
+    # export PKG_CONFIG_PATH="${COOKBOOK_SYSROOT}/lib/pkgconfig"
+    # #:${COOKBOOK_SYSROOT}/usr/lib/pkgconfig:${COOKBOOK_SYSROOT}/usr/share/pkgconfig"
+    # export PKG_CONFIG_LIBDIR="${COOKBOOK_SYSROOT}/lib/pkgconfig"
+    # #:${COOKBOOK_SYSROOT}/usr/lib/pkgconfig"
+    # export PKG_CONFIG_SYSROOT_DIR="${COOKBOOK_SYSROOT}"
+
+    # # I'm tired trying figure out why multiple pkgconfig paths are ignored by cargo building stuff
+    # # rsync -a -v ${COOKBOOK_SYSROOT}/usr/share/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
+    # rsync -a -v ${COOKBOOK_SYSROOT}/usr/lib/pkgconfig/*.pc ${COOKBOOK_SYSROOT}/lib/pkgconfig/
+
+    # ls -al $PKG_CONFIG_PATH
+
+    env
+
+    export TARGET=x86_64-unknown-redox
+    export HOST=x86_64-linux-gnu
+
+    rsync -a --delete "${COOKBOOK_SOURCE}/" ./
+    cargo build -p aws-lc-sys --target x86_64-unknown-redox --release
+    cargo build -p aws-lc-rs --target x86_64-unknown-redox --release
+"""
