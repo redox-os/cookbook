@@ -1,0 +1,41 @@
+[source]
+git = "https://gitlab.redox-os.org/njskalski/mozangle.git"
+branch = "redox_mods"
+[build]
+template = "custom"
+dependencies = [
+    "freetype2",
+    "gettext",
+    "glib",
+    "gstreamer",
+    "harfbuzz",
+    "libffi",
+    "libiconv",
+    "libx11",
+    "libxcb",
+    "libpng",
+    "openssl1",
+    "pcre",
+    "zlib",
+
+    "x11proto",
+    "x11proto-kb",
+    "xcb-proto",
+    "xextproto",
+    "libxau",
+    "libpthread-stubs",
+    "fontconfig",
+    "expat",
+    "relibc",
+    "gcc13",
+]
+
+script = """
+    export TARGET=x86_64-unknown-redox
+    export TARGET_CC=x86_64-unknown-redox-gcc
+    export TARGET_CXX=x86_64-unknown-redox-g++
+    export TARGET_AR=x86_64-unknown-redox-ar
+
+    rsync -a --delete "${COOKBOOK_SOURCE}/" ./
+    cargo build --release --target x86_64-unknown-redox
+"""
