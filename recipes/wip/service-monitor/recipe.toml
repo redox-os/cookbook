@@ -1,0 +1,17 @@
+[source]
+git = "https://gitlab.redox-os.org/CharlliePhillips/service-monitor.git"
+
+[build]
+template = "custom"
+script = """ 
+cookbook_cargo_packages service-monitor randdstat smtest
+# rename the executable binaries 
+mv "${COOKBOOK_STAGE}"/usr/bin/service-monitor_service-monitor "${COOKBOOK_STAGE}"/usr/bin/service-monitor 
+mv "${COOKBOOK_STAGE}"/usr/bin/service-monitor_randdstat "${COOKBOOK_STAGE}"/usr/bin/randdstat
+mv "${COOKBOOK_STAGE}"/usr/bin/service-monitor_smtest "${COOKBOOK_STAGE}"/usr/bin/smtest
+
+# place registry in the filesystem
+mkdir -pv "${COOKBOOK_STAGE}"/usr/lib/registry # create the registry folder
+cp -R "${COOKBOOK_SOURCE}"/../registry "${COOKBOOK_STAGE}"/usr/lib/ # copy the configuration file from the program source code to the package
+cp "${COOKBOOK_SOURCE}"/../user.toml "${COOKBOOK_STAGE}"/usr/lib/user.toml
+"""

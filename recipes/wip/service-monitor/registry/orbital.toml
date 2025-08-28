@@ -1,0 +1,9 @@
+name = "orbital"
+command = "orbital orblogin launcher" 
+scheme = ""
+restart_behavior = "never"
+init_after = "audiod"
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {BROWSER = "/bin/netsurf-fb", VT = "3"}

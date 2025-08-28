@@ -1,0 +1,9 @@
+name = "getty_debug"
+command = "getty /scheme/debug/no-preserve -J" 
+scheme = ""
+restart_behavior = "never"
+init_after = "getty2"
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {}

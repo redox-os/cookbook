@@ -1,0 +1,9 @@
+name = "dhcpd"
+command = "dhcpd -b" 
+scheme = ""
+restart_behavior = "never"
+init_after = "smolnetd"
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {}
