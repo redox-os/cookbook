@@ -74,7 +74,7 @@ export PKG_CONFIG_LIBDIR="${COOKBOOK_SYSROOT}/lib/pkgconfig"
 #:${COOKBOOK_SYSROOT}/usr/lib/pkgconfig"
 export PKG_CONFIG_SYSROOT_DIR="${COOKBOOK_SYSROOT}"
 
-export RUSTFLAGS="-C target-feature=-crt-static -C link-args=-lpng -C link-args=-lxcb -C link-args=-lexpat -C link-args=-lgcc_s"
+export RUSTFLAGS="-C target-feature=-crt-static -C link-args=-lpng -C link-args=-lxcb -C link-args=-lexpat -C link-args=-lgcc_s -C link-args=-lz -C link-args=-lXau -C link-args=-no-pie"
 
 rsync -a --delete "${COOKBOOK_SOURCE}/" ./
 
