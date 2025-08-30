@@ -33,6 +33,8 @@ COOKBOOK_CONFIGURE_FLAGS+=(
     gt_cv_locale_ja=false
     gt_cv_locale_tr_utf8=false
     gt_cv_locale_zh_CN=false
+    CFLAGS="-fPIC"
+    CXXFLAGS="-fPIC"
 )
 cookbook_configure
 """
