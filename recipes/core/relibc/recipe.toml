@@ -1,5 +1,7 @@
 [source]
-git = "https://gitlab.redox-os.org/redox-os/relibc.git"
+# git = "https://gitlab.redox-os.org/redox-os/relibc.git"
+git = "https://gitlab.redox-os.org/njskalski/relibc.git"
+branch = "fix_clang_bindgen_issue"
 
 [build]
 template = "custom"
