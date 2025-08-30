@@ -34,7 +34,6 @@ cp "${COOKBOOK_RECIPE}/.servobuild" "${COOKBOOK_SOURCE}/.servobuild"
 
 # Add wrapper to PATH
 export PATH="${COOKBOOK_RECIPE}:${PATH}"
-export HOST=x86_64-unknown-linux-gnu
 export TARGET=${TARGET}
 
 # Force cargo to use the correct build target
