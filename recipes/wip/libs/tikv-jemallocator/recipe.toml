@@ -5,10 +5,6 @@ branch = "redox_mods"
 [build]
 template = "custom"
 
-dependencies = [
-    "relibc",
-]
-
 script = """
 # Build the library crates
 "${COOKBOOK_REDOXER}" build --manifest-path "${COOKBOOK_SOURCE}/Cargo.toml" --workspace --release

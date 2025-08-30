@@ -31,11 +31,11 @@ dependencies = [
 ]
 
 script = """
-    export TARGET=x86_64-unknown-redox
-    export TARGET_CC=x86_64-unknown-redox-gcc
-    export TARGET_CXX=x86_64-unknown-redox-g++
-    export TARGET_AR=x86_64-unknown-redox-ar
+    export TARGET=${TARGET}
+    export TARGET_CC=${TARGET}-gcc
+    export TARGET_CXX=${TARGET}-g++
+    export TARGET_AR=${TARGET}-ar
 
     rsync -a --delete "${COOKBOOK_SOURCE}/" ./
-    cargo build --release --target x86_64-unknown-redox
+    cargo build --release --target ${TARGET}
 """
