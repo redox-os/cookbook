@@ -1,0 +1,13 @@
+# This is a stub recipe that runs libc's test suite
+# without installing anything.
+
+[source]
+git = "https://github.com/rust-lang/libc"
+
+[build]
+template = "custom"
+script = """
+pushd "${COOKBOOK_SOURCE}/libc-test"
+cargo test --target "${TARGET}"
+popd
+"""
