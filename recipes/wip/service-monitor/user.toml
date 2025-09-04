@@ -1,3 +1,3 @@
 registry = "/usr/lib/registry"
 heartbeat_interval = 3000
-capabilities = ["nvmed"]
+capabilities = ["nvmed", "redoxfs"]

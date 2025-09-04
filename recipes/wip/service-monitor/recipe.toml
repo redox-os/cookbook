@@ -4,11 +4,12 @@ git = "https://gitlab.redox-os.org/CharlliePhillips/service-monitor.git"
 [build]
 template = "custom"
 script = """ 
-cookbook_cargo_packages service-monitor randdstat smtest
+cookbook_cargo_packages service-monitor randdstat smtest smtui
 # rename the executable binaries 
 mv "${COOKBOOK_STAGE}"/usr/bin/service-monitor_service-monitor "${COOKBOOK_STAGE}"/usr/bin/service-monitor 
 mv "${COOKBOOK_STAGE}"/usr/bin/service-monitor_randdstat "${COOKBOOK_STAGE}"/usr/bin/randdstat
 mv "${COOKBOOK_STAGE}"/usr/bin/service-monitor_smtest "${COOKBOOK_STAGE}"/usr/bin/smtest
+mv "${COOKBOOK_STAGE}"/usr/bin/service-monitor_smtui "${COOKBOOK_STAGE}"/usr/bin/smtui
 
 # place registry in the filesystem
 mkdir -pv "${COOKBOOK_STAGE}"/usr/lib/registry # create the registry folder
