@@ -20,6 +20,8 @@ COOKBOOK_CONFIGURE_FLAGS=(
     --enable-shared
     --enable-static
     --without-python
+    CFLAGS="-fPIC"
+    CXXFLAGS="-fPIC"
 )
 cookbook_configure
 """
