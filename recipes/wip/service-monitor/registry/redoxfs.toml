@@ -1,0 +1,9 @@
+name = "redoxfs"
+command = "" 
+scheme = "/scheme/file"
+restart_behavior = "never"
+init_after = ""
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {}

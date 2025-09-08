@@ -1,0 +1,9 @@
+name = "randdstat"
+command = "randdstat" 
+scheme = "/scheme/randdstat"
+restart_behavior = "never"
+init_after = "orbital"
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {}

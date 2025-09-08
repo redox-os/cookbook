@@ -1,0 +1,9 @@
+name = "nvmed"
+command = "" 
+scheme = "/scheme/disk.pci-00-00-05.0-nvme/s"
+restart_behavior = "never"
+init_after = ""
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {}
