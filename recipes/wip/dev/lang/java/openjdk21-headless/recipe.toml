@@ -1,17 +1,40 @@
 #TODO build instructions - https://github.com/openjdk/jdk21u/blob/master/doc/building.md
-#TODO can't find the configure script
 [source]
-git = "https://github.com/openjdk/jdk21u"
-rev = "060c4f7589e7f13febd402f4dac3320f4c032b08"
+git = "https://github.com/willnode/jdk"
+branch = "jdk-21-redox"
+script = """
+chmod a+x configure
+"""
+
 [build]
 template = "custom"
 dependencies = [
-    "fontconfig",
+    "libxrandr",
+#    "libxtst", -- not compiling
+#    "libcups2",
+#    "libasound2",
 ]
 script = """
-chmod a+x configure
-COOKBOOK_CONFIGURE_FLAGS+=(
+DYNAMIC_INIT
+ARCH="${TARGET%%-*}"
+
+# ------- devkit -------------
+COOKBOOK_CONFIGURE_FLAGS=(
+#    --enable-ccache # do symlink ccache -> sccache
     --enable-headless-only=yes
+    --openjdk-target=$ARCH-redox
+    --disable-precompiled-headers
+    --with-zlib=system
+    --disable-warnings-as-errors
+    --prefix="${COOKBOOK_STAGE}/usr"
+#   --with-extra-cflags
+#   --with-extra-ldflags
 )
-cookbook_configure
+
+export CC={$GNU_TARGET}-gcc CXX={$GNU_TARGET}-gxx
+unset AR AS CFLAGS FIND LD LDFLAGS NM OBJCOPY OBJDUMP RANLIB READELF RUSTFLAGS STRIP
+
+"${COOKBOOK_CONFIGURE}" "${COOKBOOK_CONFIGURE_FLAGS[@]}"
+"${COOKBOOK_MAKE}" JOBS="${COOKBOOK_MAKE_JOBS}"
+"${COOKBOOK_MAKE}" install
 """
