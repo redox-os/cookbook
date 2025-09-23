@@ -1,5 +1,5 @@
-#[source]
-#git = "https://gitlab.redox-os.org/CharlliePhillips/service-monitor.git"
+[source]
+git = "https://gitlab.redox-os.org/CharlliePhillips/service-monitor.git"
 
 [build]
 template = "custom"
