@@ -1,0 +1,9 @@
+name = "ahcid"
+command = "" 
+scheme = "/scheme/disk.pci-00-00-1f.2_ahci/s"
+restart_behavior = "never"
+init_after = ""
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {}

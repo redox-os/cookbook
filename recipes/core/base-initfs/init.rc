@@ -39,3 +39,4 @@ set-default-scheme file
 cd /
 export PATH /usr/bin
 run.d /usr/lib/init.d /etc/init.d
+service-monitor /usr/lib/service-monitor.toml

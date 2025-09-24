@@ -1,0 +1,9 @@
+name = "getty2"
+command = "getty 2" 
+scheme = ""
+restart_behavior = "never"
+init_after = "orbital"
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {}

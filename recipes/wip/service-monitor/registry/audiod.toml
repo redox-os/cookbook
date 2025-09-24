@@ -1,0 +1,9 @@
+name = "audiod"
+command = "audiod" 
+scheme = "/scheme/audio"
+restart_behavior = "never"
+init_after = "dhcpd"
+always_after = ""
+drivers = ""
+depends = [""]
+envs = {}
