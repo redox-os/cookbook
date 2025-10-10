@@ -1,6 +1,6 @@
 #TODO need v8 patches, primilarily abseil-cpp
 [source]
-tar = "https://nodejs.org/dist/v24.5.0/node-v24.9.0.tar.xz"
+tar = "https://nodejs.org/dist/v21.7.3/node-v21.7.3.tar.xz"
 patches = ["redox.patch"]
 
 [build]
@@ -25,19 +25,13 @@ export CC_host="$CC_WRAPPER gcc" CXX_host="$CC_WRAPPER g++"
 rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 
 case "${TARGET}" in
-    x86-unknown-redox)
-        export NODE_CPU=x32
-        ;;
-    x86_64-unknown-redox)
-        export NODE_CPU=x64
-        ;;
-    aarch64-unknown-redox)
-        export NODE_CPU=arm64
-        ;;
+    x86-unknown-redox)     export NODE_CPU=x32;;
+    x86_64-unknown-redox)  export NODE_CPU=x64;;
+    aarch64-unknown-redox) export NODE_CPU=arm64;;
 esac
 
 COOKBOOK_CONFIGURE_FLAGS=(
-  --prefix=${COOKBOOK_STAGE}
+  --prefix=/usr
   --dest-cpu=${NODE_CPU}
   --dest-os=redox
   --shared-cares
@@ -48,8 +42,6 @@ COOKBOOK_CONFIGURE_FLAGS=(
   --shared-openssl
   --shared-zlib
   --cross-compiling
-  --without-inspector
-  --without-intl
 )
 COOKBOOK_CONFIGURE="./configure"
 cookbook_configure
