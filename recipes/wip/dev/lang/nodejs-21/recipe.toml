@@ -1,7 +1,7 @@
 #TODO need v8 patches, primilarily abseil-cpp
 [source]
 tar = "https://nodejs.org/dist/v24.5.0/node-v24.9.0.tar.xz"
-patches = ["01_redox.patch"]
+patches = ["redox.patch"]
 
 [build]
 template = "custom"
@@ -19,7 +19,8 @@ dependencies = [
 ]
 script = """
 DYNAMIC_INIT
-export PYTHONDONTWRITEBYTECODE=1 CC_host=gcc CXX_host=g++
+export PYTHONDONTWRITEBYTECODE=1
+export CC_host="$CC_WRAPPER gcc" CXX_host="$CC_WRAPPER g++"
 
 rsync -av --delete "${COOKBOOK_SOURCE}/" ./
 

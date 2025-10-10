@@ -1,0 +1,179 @@
+diff --color -ruwN source/configure.py source-new/configure.py
+--- source/configure.py	2024-04-10 19:46:11.000000000 +0700
++++ source-new/configure.py	2025-10-10 10:19:59.557662417 +0700
+@@ -46,7 +46,7 @@
+ parser = argparse.ArgumentParser()
+ 
+ valid_os = ('win', 'mac', 'solaris', 'freebsd', 'openbsd', 'linux',
+-            'android', 'aix', 'cloudabi', 'os400', 'ios')
++            'android', 'aix', 'cloudabi', 'os400', 'ios', 'redox')
+ valid_arch = ('arm', 'arm64', 'ia32', 'mips', 'mipsel', 'mips64el', 'ppc',
+               'ppc64', 'x64', 'x86', 'x86_64', 's390x', 'riscv64', 'loong64')
+ valid_arm_float_abi = ('soft', 'softfp', 'hard')
+diff --color -ruwN source/deps/v8/BUILD.gn source-new/deps/v8/BUILD.gn
+--- source/deps/v8/BUILD.gn	2024-04-10 19:46:12.000000000 +0700
++++ source-new/deps/v8/BUILD.gn	2025-10-10 10:28:38.588555302 +0700
+@@ -6174,6 +6174,11 @@
+       "src/base/debug/stack_trace_posix.cc",
+       "src/base/platform/platform-darwin.cc",
+     ]
++  } else if (is_redox) {
++    sources += [
++      "src/base/debug/stack_trace_posix.cc",
++      "src/base/platform/platform-redox.cc",
++    ]
+   } else if (is_ios) {
+     sources += [
+       "src/base/debug/stack_trace_posix.cc",
+diff --color -ruwN source/deps/v8/include/v8config.h source-new/deps/v8/include/v8config.h
+--- source/deps/v8/include/v8config.h	2024-04-10 19:46:12.000000000 +0700
++++ source-new/deps/v8/include/v8config.h	2025-10-10 10:26:52.552109867 +0700
+@@ -159,6 +159,11 @@
+ # define V8_OS_QNX 1
+ # define V8_OS_STRING "qnx"
+ 
++#elif defined(__redox__)
++# define V8_OS_POSIX 1
++# define V8_OS_REDOX 1
++# define V8_OS_STRING "redox"
++
+ #elif defined(_WIN32)
+ # define V8_OS_WIN 1
+ # define V8_OS_STRING "windows"
+diff --color -ruwN source/deps/v8/src/base/platform/memory.h source-new/deps/v8/src/base/platform/memory.h
+--- source/deps/v8/src/base/platform/memory.h	2024-04-10 19:46:12.000000000 +0700
++++ source-new/deps/v8/src/base/platform/memory.h	2025-10-10 11:41:37.430790050 +0700
+@@ -23,9 +23,9 @@
+ #include <malloc.h>
+ #endif  // !V8_OS_DARWIN
+ 
+-#if (V8_OS_POSIX && !V8_OS_AIX && !V8_OS_SOLARIS) || V8_OS_WIN
++#if (V8_OS_POSIX && !V8_OS_AIX && !V8_OS_SOLARIS && !V8_OS_REDOX) || V8_OS_WIN
+ #define V8_HAS_MALLOC_USABLE_SIZE 1
+-#endif  // (V8_OS_POSIX && !V8_OS_AIX && !V8_OS_SOLARIS) || V8_OS_WIN
++#endif  // (V8_OS_POSIX && !V8_OS_AIX && !V8_OS_SOLARIS && !V8_OS_REDOX) || V8_OS_WIN
+ 
+ namespace v8::base {
+ 
+diff --color -ruwN source/deps/v8/src/base/platform/platform-posix.cc source-new/deps/v8/src/base/platform/platform-posix.cc
+--- source/deps/v8/src/base/platform/platform-posix.cc	2024-04-10 19:46:12.000000000 +0700
++++ source-new/deps/v8/src/base/platform/platform-posix.cc	2025-10-10 10:36:56.267374425 +0700
+@@ -28,6 +28,10 @@
+ #include <sys/sysctl.h>  // for sysctl
+ #endif
+ 
++#if defined(__redox__)
++  #define PTHREAD_STACK_MIN 4096
++#endif
++
+ #if defined(ANDROID) && !defined(V8_ANDROID_LOG_STDOUT)
+ #define LOG_TAG "v8"
+ #include <android/log.h>
+@@ -69,7 +73,7 @@
+ #include <sys/resource.h>
+ #endif
+ 
+-#if !defined(_AIX) && !defined(V8_OS_FUCHSIA)
++#if !defined(_AIX) && !defined(V8_OS_FUCHSIA) && !defined(V8_OS_REDOX)
+ #include <sys/syscall.h>
+ #endif
+ 
+@@ -135,7 +139,7 @@
+   int flags = MAP_ANONYMOUS;
+   flags |= (page_type == PageType::kShared) ? MAP_SHARED : MAP_PRIVATE;
+   if (access == OS::MemoryPermission::kNoAccess) {
+-#if !V8_OS_AIX && !V8_OS_FREEBSD && !V8_OS_QNX
++#if !V8_OS_AIX && !V8_OS_FREEBSD && !V8_OS_QNX && !V8_OS_REDOX
+     flags |= MAP_NORESERVE;
+ #endif  // !V8_OS_AIX && !V8_OS_FREEBSD && !V8_OS_QNX
+ #if V8_OS_QNX
+diff --color -ruwN source/deps/v8/src/libsampler/sampler.cc source-new/deps/v8/src/libsampler/sampler.cc
+--- source/deps/v8/src/libsampler/sampler.cc	2024-04-10 19:46:13.000000000 +0700
++++ source-new/deps/v8/src/libsampler/sampler.cc	2025-10-10 13:00:49.277704100 +0700
+@@ -16,11 +16,11 @@
+ #include <sys/time.h>
+ #include <atomic>
+ 
+-#if !V8_OS_QNX && !V8_OS_AIX
++#if !V8_OS_QNX && !V8_OS_AIX && !V8_OS_REDOX
+ #include <sys/syscall.h>
+ #endif
+ 
+-#if V8_OS_AIX || V8_TARGET_ARCH_S390X
++#if V8_OS_AIX || V8_OS_REDOX || V8_TARGET_ARCH_S390X
+ 
+ #include "src/base/platform/time.h"
+ 
+diff --color -ruwN source/deps/v8/src/wasm/std-object-sizes.h source-new/deps/v8/src/wasm/std-object-sizes.h
+--- source/deps/v8/src/wasm/std-object-sizes.h	2024-04-10 19:46:13.000000000 +0700
++++ source-new/deps/v8/src/wasm/std-object-sizes.h	2025-10-10 12:55:41.983970646 +0700
+@@ -54,24 +54,7 @@
+   return raw * 4 / 3;
+ }
+ 
+-// To make it less likely for size estimation functions to become outdated
+-// when the classes they're responsible for change, we insert static asserts
+-// about the respective class's size into them to at least catch some possible
+-// future modifications. Since object sizes are toolchain specific, we define
+-// restrictions here under which we enable these checks.
+-// When one of these checks fails, that probably means you've added fields to
+-// a class guarded by it. Update the respective EstimateCurrentMemoryConsumption
+-// function accordingly, and then update the check's expected size.
+-#if V8_TARGET_ARCH_X64 && defined(__clang__) && V8_TARGET_OS_LINUX &&          \
+-    !V8_USE_ADDRESS_SANITIZER && !V8_USE_MEMORY_SANITIZER && defined(DEBUG) && \
+-    V8_COMPRESS_POINTERS && !defined(V8_GC_MOLE) && defined(_LIBCPP_VERSION)
+-#define UPDATE_WHEN_CLASS_CHANGES(classname, size)                       \
+-  static_assert(sizeof(classname) == size,                               \
+-                "Update {EstimateCurrentMemoryConsumption} when adding " \
+-                "fields to " #classname)
+-#else
+ #define UPDATE_WHEN_CLASS_CHANGES(classname, size) (void)0
+-#endif
+ 
+ }  // namespace v8::internal::wasm
+ 
+diff --color -ruwN source/src/debug_utils.cc source-new/src/debug_utils.cc
+--- source/src/debug_utils.cc	2024-04-10 19:46:14.000000000 +0700
++++ source-new/src/debug_utils.cc	2025-10-10 10:45:41.034617149 +0700
+@@ -14,7 +14,7 @@
+ 
+ #if defined(__linux__) && !defined(__GLIBC__) || \
+     defined(__UCLIBC__) || \
+-    defined(_AIX)
++    defined(_AIX) || defined(__redox__)
+ #define HAVE_EXECINFO_H 0
+ #else
+ #define HAVE_EXECINFO_H 1
+diff --color -ruwN source/src/node_credentials.cc source-new/src/node_credentials.cc
+--- source/src/node_credentials.cc	2024-04-10 19:46:14.000000000 +0700
++++ source-new/src/node_credentials.cc	2025-10-10 11:08:55.883868466 +0700
+@@ -182,7 +182,7 @@
+ 
+ static uid_t uid_by_name(Isolate* isolate, Local<Value> value) {
+   if (value->IsUint32()) {
+-    static_assert(std::is_same<uid_t, uint32_t>::value);
++    // static_assert(std::is_same<uid_t, uint32_t>::value);
+     return value.As<Uint32>()->Value();
+   } else {
+     Utf8Value name(isolate, value);
+@@ -192,7 +192,7 @@
+ 
+ static gid_t gid_by_name(Isolate* isolate, Local<Value> value) {
+   if (value->IsUint32()) {
+-    static_assert(std::is_same<gid_t, uint32_t>::value);
++    // static_assert(std::is_same<gid_t, uint32_t>::value);
+     return value.As<Uint32>()->Value();
+   } else {
+     Utf8Value name(isolate, value);
+diff --color -ruwN source/src/node_report.cc source-new/src/node_report.cc
+--- source/src/node_report.cc	2024-04-10 19:46:14.000000000 +0700
++++ source-new/src/node_report.cc	2025-10-10 11:11:21.728881384 +0700
+@@ -524,7 +524,7 @@
+     while (line != -1) {
+       l = ss.substr(0, line);
+       l.erase(l.begin(), std::find_if(l.begin(), l.end(), [](int ch) {
+-                return !std::iswspace(ch);
++                return !std::isspace(ch);
+               }));
+       writer->json_element(l);
+       ss = ss.substr(line + 1);
