@@ -1,10 +1,13 @@
 use std::{collections::BTreeSet, convert::TryInto, fs, path::PathBuf};
 
 use pkg::{package::PackageError, recipes, PackageName};
+use regex::Regex;
 use serde::{
     de::{value::Error as DeError, Error as DeErrorT},
     Deserialize, Serialize,
 };
+
+use crate::WALK_DEPTH;
 
 /// Specifies how to download the source for a recipe
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
@@ -57,6 +60,26 @@ pub enum SourceRecipe {
         /// Optional script to run to prepare the source, such as ./autogen.sh
         script: Option<String>,
     },
+}
+
+impl SourceRecipe {
+    pub fn guess_version(&self) -> Option<String> {
+        match self {
+            SourceRecipe::Tar {
+                tar,
+                blake3: _,
+                patches: _,
+                script: _,
+            } => {
+                let re = Regex::new(r"\d+\.\d+\.\d+").unwrap();
+                if let Some(arm) = re.captures(&tar) {
+                    return Some(arm.get(0).unwrap().as_str().to_string());
+                }
+                None
+            }
+            _ => None,
+        }
+    }
 }
 
 /// Specifies how to build a recipe
@@ -115,6 +138,8 @@ pub struct BuildRecipe {
 pub struct PackageRecipe {
     #[serde(default)]
     pub dependencies: Vec<PackageName>,
+    #[serde(default)]
+    pub version: Option<String>,
 }
 
 /// Everything required to build a Redox package
@@ -135,6 +160,8 @@ pub struct CookRecipe {
     pub name: PackageName,
     pub dir: PathBuf,
     pub recipe: Recipe,
+    /// If true, the source will not be checked for freshness
+    pub is_deps: bool,
 }
 
 impl CookRecipe {
@@ -156,7 +183,12 @@ impl CookRecipe {
             .map_err(|err| PackageError::Parse(DeError::custom(err), Some(file)))?;
 
         let dir = dir.to_path_buf();
-        Ok(Self { name, dir, recipe })
+        Ok(Self {
+            name,
+            dir,
+            recipe,
+            is_deps: false,
+        })
     }
 
     pub fn new_recursive(
@@ -191,6 +223,21 @@ impl CookRecipe {
         }
 
         Ok(recipes)
+    }
+
+    pub fn get_build_deps_recursive(
+        names: &[PackageName],
+        mark_is_deps: bool,
+    ) -> Result<Vec<Self>, PackageError> {
+        let mut packages = Self::new_recursive(names, WALK_DEPTH)?;
+
+        if mark_is_deps {
+            for package in packages.iter_mut() {
+                package.is_deps = !names.contains(&package.name);
+            }
+        }
+
+        Ok(packages)
     }
 
     pub fn get_package_deps_recursive(
@@ -274,9 +321,7 @@ mod tests {
                     },
                     dependencies: Vec::new(),
                 },
-                package: PackageRecipe {
-                    dependencies: Vec::new(),
-                },
+                package: PackageRecipe::default(),
             }
         );
     }
@@ -316,11 +361,12 @@ mod tests {
                     },
                     dependencies: Vec::new(),
                 },
-                package: PackageRecipe {
-                    dependencies: Vec::new(),
-                },
+                package: PackageRecipe::default(),
             }
         );
+
+        let source = recipe.source.unwrap();
+        assert_eq!(source.guess_version(), Some("1.3.3".to_string()));
     }
 
     #[test]
@@ -347,6 +393,7 @@ mod tests {
                 },
                 package: PackageRecipe {
                     dependencies: vec![PackageName::new("gcc13").unwrap()],
+                    version: None,
                 },
             }
         );

@@ -1,4 +1,5 @@
 use cookbook::blake3::blake3_progress;
+use cookbook::config::{init_config, translate_mirror};
 use cookbook::recipe::{AutoDeps, BuildKind, CookRecipe, Recipe, SourceRecipe};
 use pkg::package::Package;
 use pkg::{recipes, PackageName};
@@ -17,7 +18,7 @@ use std::{
 use termion::{color, style};
 use walkdir::{DirEntry, WalkDir};
 
-use cookbook::WALK_DEPTH;
+use cookbook::{is_redox, WALK_DEPTH};
 
 fn remove_all(path: &Path) -> Result<(), String> {
     if path.is_dir() {
@@ -203,29 +204,77 @@ fn serialize_and_write<T: Serialize>(file_path: &Path, content: &T) -> Result<()
 }
 
 static SHARED_PRESCRIPT: &str = r#"
+# Build dynamically
 function DYNAMIC_INIT {
-  COOKBOOK_AUTORECONF="autoreconf"
-  autotools_recursive_regenerate() {
-    for f in $(find . -name configure.ac -o -name configure.in -type f | sort); do
-      echo "* autotools regen in '$(dirname $f)'..."
-      ( cd "$(dirname "$f")" && "${COOKBOOK_AUTORECONF}" -fvi "$@" -I${COOKBOOK_HOST_SYSROOT}/share/aclocal )
-    done
-  }
+    COOKBOOK_AUTORECONF="autoreconf"
+    autotools_recursive_regenerate() {
+        for f in $(find . -name configure.ac -o -name configure.in -type f | sort); do
+            echo "* autotools regen in '$(dirname $f)'..."
+            ( cd "$(dirname "$f")" && "${COOKBOOK_AUTORECONF}" -fvi "$@" -I${COOKBOOK_HOST_SYSROOT}/share/aclocal )
+        done
+    }
 
-  echo "DEBUG: Program is being compiled dynamically."
+    if [ "${TARGET}" != "x86_64-unknown-redox" ]
+    then
+        echo "WARN: ${TARGET} does not support dynamic linking." >&2
+        return
+    fi
 
-  COOKBOOK_CONFIGURE_FLAGS=(
-    --host="${GNU_TARGET}"
-    --prefix="/usr"
-    --enable-shared
-    --disable-static
-  )
+    echo "DEBUG: Program is being compiled dynamically."
 
-  # TODO: check paths for spaces
-  export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib"
-  export LDFLAGS="-Wl,-rpath-link,${COOKBOOK_SYSROOT}/lib $LDFLAGS"
-  export RUSTFLAGS="-C target-feature=-crt-static"
-  export COOKBOOK_DYNAMIC=1
+    COOKBOOK_CONFIGURE_FLAGS=(
+        --host="${GNU_TARGET}"
+        --prefix="/usr"
+        --enable-shared
+        --disable-static
+    )
+
+    COOKBOOK_CMAKE_FLAGS=(
+        -DBUILD_SHARED_LIBS=True
+        -DENABLE_SHARED=True
+        -DENABLE_STATIC=False
+    )
+
+    COOKBOOK_MESON_FLAGS=(
+        --buildtype release
+        --wrap-mode nofallback
+        --strip
+        -Ddefault_library=shared
+        -Dprefix=/usr
+    )
+
+    # TODO: check paths for spaces
+    export LDFLAGS="-Wl,-rpath-link,${COOKBOOK_SYSROOT}/lib -L${COOKBOOK_SYSROOT}/lib"
+    export RUSTFLAGS="-C target-feature=-crt-static"
+    export COOKBOOK_DYNAMIC=1
+}
+
+# Build both dynamically and statically
+function DYNAMIC_STATIC_INIT {
+    DYNAMIC_INIT
+    if [ "${COOKBOOK_DYNAMIC}" == "1" ]
+    then
+        COOKBOOK_CONFIGURE_FLAGS=(
+            --host="${GNU_TARGET}"
+            --prefix="/usr"
+            --enable-shared
+            --enable-static
+        )
+
+        COOKBOOK_CMAKE_FLAGS=(
+            -DBUILD_SHARED_LIBS=True
+            -DENABLE_SHARED=True
+            -DENABLE_STATIC=True
+        )
+
+        COOKBOOK_MESON_FLAGS=(
+            --buildtype release
+            --wrap-mode nofallback
+            --strip
+            -Ddefault_library=both
+            -Dprefix=/usr
+        )
+    fi
 }
 
 function GNU_CONFIG_GET {
@@ -321,7 +370,10 @@ fn fetch(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result<PathBuf, St
 
                 // Clone the repository to source.tmp
                 let mut command = Command::new("git");
-                command.arg("clone").arg("--recursive").arg(git);
+                command
+                    .arg("clone")
+                    .arg("--recursive")
+                    .arg(translate_mirror(git));
                 if let Some(branch) = branch {
                     command.arg("--branch").arg(branch);
                 }
@@ -369,8 +421,9 @@ fn fetch(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result<PathBuf, St
                 command.arg("-C").arg(&source_dir);
                 command.arg("checkout").arg(rev);
                 run_command(command)?;
-            } else if !shallow_clone {
+            } else if !shallow_clone && !is_redox() {
                 //TODO: complicated stuff to check and reset branch to origin
+                //TODO: redox can't undestand this (got exit status 1)
                 let mut command = Command::new("bash");
                 command.arg("-c").arg(
                     r#"
@@ -467,7 +520,7 @@ fi"#,
                     let source_tar_tmp = recipe_dir.join("source.tar.tmp");
 
                     let mut command = Command::new("wget");
-                    command.arg(tar);
+                    command.arg(translate_mirror(tar));
                     command.arg("--continue").arg("-O").arg(&source_tar_tmp);
                     run_command(command)?;
 
@@ -508,9 +561,14 @@ fi"#,
                 // Extract tar to source.tmp
                 //TODO: use tar crate (how to deal with compression?)
                 let mut command = Command::new("tar");
-                command.arg("--extract");
-                command.arg("--verbose");
-                command.arg("--file").arg(&source_tar);
+                if is_redox() {
+                    command.arg("xvf");
+                } else {
+                    command.arg("--extract");
+                    command.arg("--verbose");
+                    command.arg("--file");
+                }
+                command.arg(&source_tar);
                 command.arg("--directory").arg(&source_dir_tmp);
                 command.arg("--strip-components").arg("1");
                 run_command(command)?;
@@ -692,7 +750,12 @@ fn build(
     target_dir: &Path,
     name: &PackageName,
     recipe: &Recipe,
+    offline_mode: bool,
+    check_source: bool,
 ) -> Result<(PathBuf, BTreeSet<PackageName>), String> {
+    let sysroot_dir = target_dir.join("sysroot");
+    let stage_dir = target_dir.join("stage");
+
     let mut dep_pkgars = BTreeSet::new();
     for dependency in recipe.build.dependencies.iter() {
         let dependency_dir = recipes::find(dependency.as_str());
@@ -709,6 +772,11 @@ fn build(
         ));
     }
 
+    if stage_dir.exists() && !check_source {
+        let auto_deps = build_auto_deps(target_dir, &stage_dir, dep_pkgars)?;
+        return Ok((stage_dir, auto_deps));
+    }
+
     let source_modified = modified_dir_ignore_git(source_dir)?;
     let deps_modified = dep_pkgars
         .iter()
@@ -716,7 +784,6 @@ fn build(
         .max()
         .unwrap_or(Ok(SystemTime::UNIX_EPOCH))?;
 
-    let sysroot_dir = target_dir.join("sysroot");
     // Rebuild sysroot if source is newer
     //TODO: rebuild on recipe changes
     if sysroot_dir.is_dir() {
@@ -766,7 +833,6 @@ fn build(
         rename(&sysroot_dir_tmp, &sysroot_dir)?;
     }
 
-    let stage_dir = target_dir.join("stage");
     // Rebuild stage if source is newer
     //TODO: rebuild on recipe changes
     if stage_dir.is_dir() {
@@ -795,7 +861,10 @@ fn build(
 
         let pre_script = r#"# Common pre script
 # Add cookbook bins to path
+if [ -z "${IS_REDOX}" ]
+then
 export PATH="${COOKBOOK_ROOT}/bin:${PATH}"
+fi
 
 # This puts cargo build artifacts in the build directory
 export CARGO_TARGET_DIR="${COOKBOOK_BUILD}/target"
@@ -821,11 +890,19 @@ export PKG_CONFIG_SYSROOT_DIR="${COOKBOOK_SYSROOT}"
 build_type=release
 install_flags=
 build_flags=--release
+offline_flags=
 if [ ! -z "${COOKBOOK_DEBUG}" ]
 then
     install_flags=--debug
     build_flags=
     build_type=debug
+    export CFLAGS="${CFLAGS} -g"
+    export CPPFLAGS="${CPPFLAGS} -g"
+fi
+
+if [ ! -z "${COOKBOOK_OFFLINE}" ]
+then
+offline_flags=--offline
 fi
 
 # cargo template
@@ -837,7 +914,8 @@ function cookbook_cargo {
         --locked \
         --no-track \
         ${install_flags} \
-        "$@"
+        ${offline_flags} \
+         -j "${COOKBOOK_MAKE_JOBS}" "$@"
 }
 
 # helper for installing binaries that are cargo examples
@@ -848,7 +926,7 @@ function cookbook_cargo_examples {
         "${COOKBOOK_CARGO}" build \
             --manifest-path "${COOKBOOK_SOURCE}/${PACKAGE_PATH}/Cargo.toml" \
             --example "${example}" \
-            ${build_flags}
+            ${build_flags} ${offline_flags} -j "${COOKBOOK_MAKE_JOBS}"
         mkdir -pv "${COOKBOOK_STAGE}/usr/bin"
         cp -v \
             "target/${TARGET}/${build_type}/examples/${example}" \
@@ -864,7 +942,7 @@ function cookbook_cargo_packages {
         "${COOKBOOK_CARGO}" build \
             --manifest-path "${COOKBOOK_SOURCE}/${PACKAGE_PATH}/Cargo.toml" \
             --package "${package}" \
-            ${build_flags}
+            ${build_flags} ${offline_flags} -j "${COOKBOOK_MAKE_JOBS}"
         mkdir -pv "${COOKBOOK_STAGE}/usr/bin"
         cp -v \
             "target/${TARGET}/${build_type}/${package}" \
@@ -881,7 +959,17 @@ COOKBOOK_CONFIGURE_FLAGS=(
     --enable-static
 )
 COOKBOOK_MAKE="make"
+
+if [ -z "${COOKBOOK_MAKE_JOBS}" ]
+then
+if [ -z "${IS_REDOX}" ]
+then
 COOKBOOK_MAKE_JOBS="$(nproc)"
+else
+COOKBOOK_MAKE_JOBS="1"
+fi
+fi
+
 function cookbook_configure {
     "${COOKBOOK_CONFIGURE}" "${COOKBOOK_CONFIGURE_FLAGS[@]}" "$@"
     "${COOKBOOK_MAKE}" -j "${COOKBOOK_MAKE_JOBS}"
@@ -890,24 +978,29 @@ function cookbook_configure {
 
 COOKBOOK_CMAKE="cmake"
 COOKBOOK_NINJA="ninja"
+COOKBOOK_CMAKE_FLAGS=(
+    -DBUILD_SHARED_LIBS=False
+    -DENABLE_SHARED=False
+    -DENABLE_STATIC=True
+)
 function cookbook_cmake {
     cat > cross_file.cmake <<EOF
-set(CMAKE_AR ${TARGET}-ar)
-set(CMAKE_CXX_COMPILER ${TARGET}-g++)
-set(CMAKE_C_COMPILER ${TARGET}-gcc)
+set(CMAKE_AR ${GNU_TARGET}-ar)
+set(CMAKE_CXX_COMPILER ${GNU_TARGET}-g++)
+set(CMAKE_C_COMPILER ${GNU_TARGET}-gcc)
 set(CMAKE_FIND_ROOT_PATH ${COOKBOOK_SYSROOT})
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_PLATFORM_USES_PATH_WHEN_NO_SONAME 1)
 set(CMAKE_PREFIX_PATH, ${COOKBOOK_SYSROOT})
-set(CMAKE_RANLIB ${TARGET}-ranlib)
+set(CMAKE_RANLIB ${GNU_TARGET}-ranlib)
 set(CMAKE_SHARED_LIBRARY_SONAME_C_FLAG "-Wl,-soname,")
 set(CMAKE_SYSTEM_NAME UnixPaths)
 set(CMAKE_SYSTEM_PROCESSOR $(echo "${TARGET}" | cut -d - -f1))
 EOF
 
-    if [ -n "$CC_WRAPPER" ]
+    if [ -n "${CC_WRAPPER}" ]
     then
         echo "set(CMAKE_C_COMPILER_LAUNCHER ${CC_WRAPPER})" >> cross_file.cmake
         echo "set(CMAKE_CXX_COMPILER_LAUNCHER ${CC_WRAPPER})" >> cross_file.cmake
@@ -922,13 +1015,11 @@ EOF
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_INSTALL_SBINDIR=bin \
         -DCMAKE_TOOLCHAIN_FILE=cross_file.cmake \
-        -DBUILD_SHARED_LIBS=True \
-        -DENABLE_STATIC=False \
         -GNinja \
         -Wno-dev \
         "${COOKBOOK_CMAKE_FLAGS[@]}" \
         "$@"
-    
+
     "${COOKBOOK_NINJA}" -j"${COOKBOOK_MAKE_JOBS}"
     DESTDIR="${COOKBOOK_STAGE}" "${COOKBOOK_NINJA}" install -j"${COOKBOOK_MAKE_JOBS}"
 }
@@ -938,6 +1029,7 @@ COOKBOOK_MESON_FLAGS=(
     --buildtype release
     --wrap-mode nofallback
     --strip
+    -Ddefault_library=static
     -Dprefix=/usr
 )
 function cookbook_meson {
@@ -965,6 +1057,9 @@ function cookbook_meson {
     echo "[properties]" >> cross_file.txt
     echo "needs_exe_wrapper = true" >> cross_file.txt
     echo "sys_root = '${COOKBOOK_SYSROOT}'" >> cross_file.txt
+    echo "c_args = [$(printf "'%s', " $CFLAGS | sed 's/, $//')]" >> cross_file.txt
+    echo "cpp_args = [$(printf "'%s', " $CPPFLAGS | sed 's/, $//')]" >> cross_file.txt
+    echo "c_link_args = [$(printf "'%s', " $LDFLAGS | sed 's/, $//')]" >> cross_file.txt
 
     unset AR
     unset AS
@@ -993,7 +1088,7 @@ function cookbook_meson {
 
         let post_script = r#"# Common post script
 # Strip binaries
-for dir in "${COOKBOOK_STAGE}/bin" "${COOKBOOK_STAGE}/usr/bin" 
+for dir in "${COOKBOOK_STAGE}/bin" "${COOKBOOK_STAGE}/usr/bin"
 do
     if [ -d "${dir}" ] && [ -z "${COOKBOOK_NOSTRIP}" ]
     then
@@ -1002,7 +1097,7 @@ do
 done
 
 # Remove libtool files
-for dir in "${COOKBOOK_STAGE}/lib" "${COOKBOOK_STAGE}/usr/lib" 
+for dir in "${COOKBOOK_STAGE}/lib" "${COOKBOOK_STAGE}/usr/lib"
 do
     if [ -d "${dir}" ]
     then
@@ -1073,26 +1168,36 @@ done
             //TODO: remove unwraps
             let cookbook_build = build_dir.canonicalize().unwrap();
             let cookbook_recipe = recipe_dir.canonicalize().unwrap();
-            let cookbook_redoxer = Path::new("target/release/cookbook_redoxer")
-                .canonicalize()
-                .unwrap();
             let cookbook_root = Path::new(".").canonicalize().unwrap();
             let cookbook_stage = stage_dir_tmp.canonicalize().unwrap();
             let cookbook_source = source_dir.canonicalize().unwrap();
             let cookbook_sysroot = sysroot_dir.canonicalize().unwrap();
 
-            let mut command = Command::new(&cookbook_redoxer);
-            command.arg("env");
-            command.arg("bash").arg("-ex");
+            let mut command = if is_redox() {
+                let mut command = Command::new("bash");
+                command.arg("-ex");
+                command.env("COOKBOOK_REDOXER", "cargo");
+                command
+            } else {
+                let cookbook_redoxer = Path::new("target/release/cookbook_redoxer")
+                    .canonicalize()
+                    .unwrap();
+                let mut command = Command::new(&cookbook_redoxer);
+                command.arg("env").arg("bash").arg("-ex");
+                command.env("COOKBOOK_REDOXER", &cookbook_redoxer);
+                command
+            };
             command.current_dir(&cookbook_build);
             command.env("COOKBOOK_BUILD", &cookbook_build);
             command.env("COOKBOOK_NAME", name.as_str());
             command.env("COOKBOOK_RECIPE", &cookbook_recipe);
-            command.env("COOKBOOK_REDOXER", &cookbook_redoxer);
             command.env("COOKBOOK_ROOT", &cookbook_root);
             command.env("COOKBOOK_STAGE", &cookbook_stage);
             command.env("COOKBOOK_SOURCE", &cookbook_source);
             command.env("COOKBOOK_SYSROOT", &cookbook_sysroot);
+            if offline_mode {
+                command.env("COOKBOOK_OFFLINE", "1");
+            }
             command
         };
 
@@ -1106,10 +1211,19 @@ done
         rename(&stage_dir_tmp, &stage_dir)?;
     }
 
-    // Calculate automatic dependencies
-    let auto_deps_path = target_dir.join("auto_deps.toml");
+    let auto_deps = build_auto_deps(target_dir, &stage_dir, dep_pkgars)?;
 
-    if auto_deps_path.is_file() && modified(&auto_deps_path)? < modified(&stage_dir)? {
+    Ok((stage_dir, auto_deps))
+}
+
+/// Calculate automatic dependencies
+fn build_auto_deps(
+    target_dir: &Path,
+    stage_dir: &PathBuf,
+    dep_pkgars: BTreeSet<(PackageName, PathBuf)>,
+) -> Result<BTreeSet<PackageName>, String> {
+    let auto_deps_path = target_dir.join("auto_deps.toml");
+    if auto_deps_path.is_file() && modified(&auto_deps_path)? < modified(stage_dir)? {
         remove_all(&auto_deps_path)?
     }
 
@@ -1120,13 +1234,12 @@ done
             toml::from_str(&toml_content).map_err(|_| "failed to deserialize cached auto_deps")?;
         wrapper.packages
     } else {
-        let packages = auto_deps(&stage_dir, &dep_pkgars);
+        let packages = auto_deps(stage_dir, &dep_pkgars);
         let wrapper = AutoDeps { packages };
         serialize_and_write(&auto_deps_path, &wrapper)?;
         wrapper.packages
     };
-
-    Ok((stage_dir, auto_deps))
+    Ok(auto_deps)
 }
 
 fn package(
@@ -1206,6 +1319,14 @@ fn package_toml(
 fn package_version(recipe: &Recipe) -> String {
     if recipe.build.kind == BuildKind::None {
         "".into()
+    } else if let Some(v) = &recipe.package.version {
+        v.to_string()
+    } else if let Some(r) = &recipe.source {
+        if let Some(m) = r.guess_version() {
+            m
+        } else {
+            "TODO".into()
+        }
     } else {
         "TODO".into()
     }
@@ -1233,13 +1354,14 @@ fn cook(
     recipe_dir: &Path,
     name: &PackageName,
     recipe: &Recipe,
+    is_deps: bool,
     fetch_only: bool,
+    is_offline: bool,
 ) -> Result<(), String> {
     if recipe.build.kind == BuildKind::None {
         return cook_meta(recipe_dir, name, recipe, fetch_only);
     }
 
-    let is_offline = env::var("COOKBOOK_OFFLINE").unwrap_or("".to_string()) == "1";
     let source_dir = match is_offline {
         true => fetch_offline(recipe_dir, &recipe.source),
         false => fetch(recipe_dir, &recipe.source),
@@ -1252,8 +1374,16 @@ fn cook(
 
     let target_dir = create_target_dir(recipe_dir)?;
 
-    let (stage_dir, auto_deps) = build(recipe_dir, &source_dir, &target_dir, name, recipe)
-        .map_err(|err| format!("failed to build: {}", err))?;
+    let (stage_dir, auto_deps) = build(
+        recipe_dir,
+        &source_dir,
+        &target_dir,
+        name,
+        recipe,
+        is_offline,
+        !is_deps,
+    )
+    .map_err(|err| format!("failed to build: {}", err))?;
 
     let _package_file = package(&stage_dir, &target_dir, name, recipe, &auto_deps)
         .map_err(|err| format!("failed to package: {}", err))?;
@@ -1274,11 +1404,14 @@ fn create_target_dir(recipe_dir: &Path) -> Result<PathBuf, String> {
 }
 
 fn main() {
+    init_config();
     let mut matching = true;
     let mut dry_run = false;
     let mut fetch_only = false;
     let mut with_package_deps = false;
     let mut quiet = false;
+    let mut nonstop = false;
+    let mut is_offline = false;
     let mut recipe_names = Vec::new();
     for arg in env::args().skip(1) {
         match arg.as_str() {
@@ -1287,6 +1420,8 @@ fn main() {
             "--with-package-deps" if matching => with_package_deps = true,
             "--fetch-only" if matching => fetch_only = true,
             "-q" | "--quiet" if matching => quiet = true,
+            "--nonstop" => nonstop = true,
+            "--offline" => is_offline = true,
             _ => recipe_names.push(arg.try_into().expect("Invalid package name")),
         }
     }
@@ -1308,7 +1443,7 @@ fn main() {
         };
     }
 
-    let recipes = match CookRecipe::new_recursive(&recipe_names, WALK_DEPTH) {
+    let recipes = match CookRecipe::get_build_deps_recursive(&recipe_names, !with_package_deps) {
         Ok(ok) => ok,
         Err(err) => {
             eprintln!(
@@ -1341,7 +1476,14 @@ fn main() {
             }
             Ok(())
         } else {
-            cook(&recipe.dir, &recipe.name, &recipe.recipe, fetch_only)
+            cook(
+                &recipe.dir,
+                &recipe.name,
+                &recipe.recipe,
+                recipe.is_deps,
+                fetch_only,
+                is_offline,
+            )
         };
 
         match res {
@@ -1367,7 +1509,9 @@ fn main() {
                     style::Reset,
                     err,
                 );
-                process::exit(1);
+                if !nonstop {
+                    process::exit(1);
+                }
             }
         }
     }
