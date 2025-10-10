@@ -1,0 +1,55 @@
+#TODO need v8 patches, primilarily abseil-cpp
+[source]
+tar = "https://nodejs.org/dist/v24.5.0/node-v24.9.0.tar.xz"
+patches = ["01_redox.patch"]
+
+[build]
+template = "custom"
+dependencies = [
+    "libbrotli",
+    "c-ares",
+    "libuv",
+    "ngtcp2",
+    "nghttp2",
+    "nghttp3",
+    "openssl3",
+    "sqlite3",
+    "zlib",
+    "zstd",
+]
+script = """
+DYNAMIC_INIT
+export PYTHONDONTWRITEBYTECODE=1 CC_host=gcc CXX_host=g++
+
+rsync -av --delete "${COOKBOOK_SOURCE}/" ./
+
+case "${TARGET}" in
+    x86-unknown-redox)
+        export NODE_CPU=x32
+        ;;
+    x86_64-unknown-redox)
+        export NODE_CPU=x64
+        ;;
+    aarch64-unknown-redox)
+        export NODE_CPU=arm64
+        ;;
+esac
+
+COOKBOOK_CONFIGURE_FLAGS=(
+  --prefix=${COOKBOOK_STAGE}
+  --dest-cpu=${NODE_CPU}
+  --dest-os=redox
+  --shared-cares
+  --shared-libuv
+  --shared-ngtcp2
+  --shared-nghttp2
+  --shared-nghttp3
+  --shared-openssl
+  --shared-zlib
+  --cross-compiling
+  --without-inspector
+  --without-intl
+)
+COOKBOOK_CONFIGURE="./configure"
+cookbook_configure
+"""
