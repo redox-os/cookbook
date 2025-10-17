@@ -1,0 +1,20 @@
+[source]
+git = "https://github.com/willnode/rustysd"
+[build]
+template = "custom"
+script = """
+cookbook_cargo
+
+mkdir -p ${COOKBOOK_STAGE}/usr/lib/rustysd
+cat <<'EOF' > ${COOKBOOK_STAGE}/usr/lib/rustysd/rustysd_config.toml
+unit_dirs = [
+  "/usr/lib/rustysd/system"
+]
+logging_dir = "/var/log/rustysd"
+log_to_disk = true
+log_to_stdout = false
+# target_unit = ""
+# selfpath = ""
+# notifications_dir = ""
+EOF
+"""
