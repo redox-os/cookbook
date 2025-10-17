@@ -1,0 +1,21 @@
+#TODO: Won't compile, vendor need patches
+[source]
+git = "https://github.com/jesseduffield/lazygit"
+
+[build]
+template = "custom"
+dependencies = [
+    "go"
+]
+script = """
+export GOOS=redox
+case "${TARGET}" in
+    x86-unknown-redox)     export GOARCH=386;;
+    x86_64-unknown-redox)  export GOARCH=amd64;;
+    aarch64-unknown-redox) export GOARCH=arm64;;
+    riscv64-unknown-redox) export GOARCH=riscv64;;
+esac
+export GOBIN=$COOKBOOK_ROOT/recipes/wip/dev/lang/go/target/$TARGET/build/bin/go
+mkdir -p $COOKBOOK_STAGE/usr/bin
+$GOBIN build -C ${COOKBOOK_SOURCE} -o $COOKBOOK_STAGE/usr/bin/lazygit
+"""
