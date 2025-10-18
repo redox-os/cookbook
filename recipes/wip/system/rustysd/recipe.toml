@@ -1,5 +1,7 @@
 [source]
 git = "https://github.com/willnode/rustysd"
+branch = "redox"
+
 [build]
 template = "custom"
 script = """
@@ -15,9 +17,10 @@ logging_dir = "/var/log/rustysd"
 log_to_disk = true
 log_to_stdout = false
 target_unit = "default.target"
+notifications_dir = "/var/run/rustysd"
 # selfpath = ""
-# notifications_dir = ""
 EOF
 
 cp ${COOKBOOK_SOURCE}/docker_test_units/*.target ${COOKBOOK_STAGE}/etc/rustysd/system/
+ln -s rsdctl ${COOKBOOK_STAGE}/usr/bin/systemctl
 """
