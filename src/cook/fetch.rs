@@ -42,12 +42,7 @@ pub fn fetch_offline(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result
             script: _,
             shallow_clone: _,
         }) => {
-            if !source_dir.is_dir() {
-                return Err(format!(
-                    "'{dir}' is not exist and unable to continue in offline mode",
-                    dir = source_dir.display(),
-                ));
-            }
+            offline_check_exists(&source_dir)?;
         }
         Some(SourceRecipe::Tar {
             tar: _,
@@ -75,10 +70,7 @@ pub fn fetch_offline(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result
                         ));
                     }
                 } else {
-                    return Err(format!(
-                        "'{dir}' is not exist and unable to continue in offline mode",
-                        dir = source_dir.display(),
-                    ));
+                    offline_check_exists(&source_dir)?;
                 }
             }
         }
@@ -276,7 +268,7 @@ pub fn fetch(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result<PathBuf
         // Local Sources
         None => {
             if !source_dir.is_dir() {
-                //TODO: Don't print if build template is none or remote 
+                //TODO: Don't print if build template is none or remote
                 eprintln!(
                     "WARNING: Recipe without source section expected source dir at '{}'",
                     source_dir.display(),

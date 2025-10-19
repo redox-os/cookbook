@@ -195,6 +195,16 @@ pub fn serialize_and_write<T: Serialize>(file_path: &Path, content: &T) -> Resul
     Ok(())
 }
 
+pub fn offline_check_exists(path: &PathBuf) -> Result<(), String> {
+    if !path.exists() {
+        return Err(format!(
+            "'{path}' is not exist and unable to continue in offline mode",
+            path = path.display(),
+        ))?;
+    }
+    Ok(())
+}
+
 pub fn download_wget(url: &str, dest: &PathBuf) -> Result<(), String> {
     if !dest.is_file() {
         let dest_tmp = PathBuf::from(format!("{}.tmp", dest.display()));

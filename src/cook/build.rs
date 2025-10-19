@@ -32,10 +32,10 @@ pub fn build_remote(
         download_wget(&get_remote_url(name, "pkgar"), &source_pkgar)?;
         download_wget(&get_remote_url(name, "toml"), &source_toml)?;
         download_wget(&get_pubkey_url(), &source_pubkey)?;
-    } else if !source_pkgar.is_file() || !source_toml.is_file() || !source_pubkey.is_file() {
-        return Err(format!(
-            "some remote package file are not exist and unable to continue in offline mode",
-        ));
+    } else {
+        offline_check_exists(&source_pkgar)?;
+        offline_check_exists(&source_toml)?;
+        offline_check_exists(&source_pubkey)?;
     }
 
     if stage_dir.is_dir() && modified(&source_pkgar)? > modified(&stage_dir)? {
