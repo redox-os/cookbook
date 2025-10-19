@@ -229,18 +229,7 @@ pub fn fetch(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result<PathBuf
             while {
                 if !source_tar.is_file() {
                     tar_updated = true;
-                    //TODO: replace wget
-                    if !source_tar.is_file() {
-                        let source_tar_tmp = recipe_dir.join("source.tar.tmp");
-
-                        let mut command = Command::new("wget");
-                        command.arg(translate_mirror(tar));
-                        command.arg("--continue").arg("-O").arg(&source_tar_tmp);
-                        run_command(command)?;
-
-                        // Move source.tar.tmp to source.tar atomically
-                        rename(&source_tar_tmp, &source_tar)?;
-                    }
+                    download_wget(&tar, &source_tar)?;
                 }
                 let source_tar_blake3 = get_blake3(&source_tar, tar_updated)?;
                 if let Some(blake3) = blake3 {

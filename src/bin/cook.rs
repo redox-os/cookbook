@@ -555,6 +555,7 @@ done
                 flags_fn("COOKBOOK_MESON_FLAGS", mesonflags),
             ),
             BuildKind::Custom { script } => script.clone(),
+            BuildKind::Remote => "cookbook_remote".to_owned(),
             BuildKind::None => "".to_owned(),
         };
 
