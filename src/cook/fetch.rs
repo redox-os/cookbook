@@ -276,6 +276,7 @@ pub fn fetch(recipe_dir: &Path, source: &Option<SourceRecipe>) -> Result<PathBuf
         // Local Sources
         None => {
             if !source_dir.is_dir() {
+                //TODO: Don't print if build template is none or remote 
                 eprintln!(
                     "WARNING: Recipe without source section expected source dir at '{}'",
                     source_dir.display(),

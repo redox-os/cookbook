@@ -89,7 +89,7 @@ pub enum BuildKind {
     /// Will not build (for meta packages)
     #[serde(rename = "none")]
     None,
-    /// Will not build (for meta packages)
+    /// Will download compiled package from remote
     #[serde(rename = "remote")]
     Remote,
     /// Will build and install using cargo
