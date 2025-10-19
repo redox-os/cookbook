@@ -1,0 +1,44 @@
+
+[source]
+git = "https://github.com/rsm-gh/goaccess.git"
+branch = "redox"
+
+[build]
+depends = ["ncursesw"]
+template = "custom"
+script = """
+export COOKBOOK_NOSTRIP=1
+
+echo "Generating make files..."
+cd "$COOKBOOK_SOURCE"
+autoreconf -fiv
+automake --add-missing --copy --force-missing
+
+mkdir -p "$COOKBOOK_BUILD"
+cd "$COOKBOOK_BUILD"
+
+# Copy source to build dir
+cp -a "$COOKBOOK_SOURCE/." .
+
+# Compile bin2c
+gcc -O2 -o "$COOKBOOK_BUILD/bin2c" "$COOKBOOK_SOURCE/src/bin2c.c"
+chmod +x "$COOKBOOK_BUILD/bin2c"
+
+# Configure for cross-compilation
+export CFLAGS="-I/mnt/redox/cookbook/recipes/libs/ncursesw/target/x86_64-unknown-redox/stage/usr/include"
+export LDFLAGS="-L/mnt/redox/cookbook/recipes/libs/ncursesw/target/x86_64-unknown-redox/stage/usr/lib"
+
+./configure \
+    --host=x86_64-unknown-redox \
+    --enable-utf8 \
+    --disable-geoip \
+    --prefix=/usr \
+    --disable-dependency-tracking \
+    --with-bin2c-path="$COOKBOOK_BUILD/src/bin2c"
+    
+make
+
+mkdir -p "$COOKBOOK_STAGE/usr/bin"
+cp "$COOKBOOK_BUILD/goaccess" "$COOKBOOK_STAGE/usr/bin/"
+"""
+
