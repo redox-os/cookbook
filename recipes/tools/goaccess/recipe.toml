@@ -25,11 +25,14 @@ gcc -O2 -o "$COOKBOOK_BUILD/bin2c" "$COOKBOOK_SOURCE/src/bin2c.c"
 chmod +x "$COOKBOOK_BUILD/bin2c"
 
 # Configure for cross-compilation
-export CFLAGS="-I/mnt/redox/cookbook/recipes/libs/ncursesw/target/x86_64-unknown-redox/stage/usr/include"
-export LDFLAGS="-L/mnt/redox/cookbook/recipes/libs/ncursesw/target/x86_64-unknown-redox/stage/usr/lib"
+
+ARCH="${COOKBOOK_REDOX_TARGET:-$(uname -m)-unknown-redox}"
+
+export CFLAGS="-I/mnt/redox/cookbook/recipes/libs/ncursesw/target/$ARCH/stage/usr/include"
+export LDFLAGS="-L/mnt/redox/cookbook/recipes/libs/ncursesw/target/$ARCH/stage/usr/lib"
 
 ./configure \
-    --host=x86_64-unknown-redox \
+    --host=$ARCH \
     --enable-utf8 \
     --disable-geoip \
     --prefix=/usr \
