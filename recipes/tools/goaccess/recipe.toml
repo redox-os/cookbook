@@ -4,7 +4,7 @@ git = "https://github.com/rsm-gh/goaccess.git"
 branch = "redox"
 
 [build]
-depends = ["ncursesw"]
+dependencies = ["ncursesw"]
 template = "custom"
 script = """
 export COOKBOOK_NOSTRIP=1
