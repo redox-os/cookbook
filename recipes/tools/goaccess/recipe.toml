@@ -2,16 +2,20 @@
 [source]
 tar = "https://tar.goaccess.io/goaccess-1.9.4.tar.gz"
 blake3 = "a7a7641c98956e8941191956129141e071321851d004269c7d21bce536d9224a"
+
+#git = "https://github.com/allinurl/goaccess.git"
+#branch = "master"
+
 patches = [
     "redox1.patch",
     "redox2.patch",
 ]
 
 # This is only needed when compiling from git, tar.gz already have the make files.
-#script = """
-#autoreconf -fiv
-#automake --add-missing --copy --force-missing
-#"""
+script = """
+autoreconf -fiv
+automake --add-missing --copy --force-missing
+"""
 
 [build]
 dependencies = ["ncursesw"]
