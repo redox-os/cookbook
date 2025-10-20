@@ -1,7 +1,6 @@
 
 [source]
-git = "https://github.com/allinurl/goaccess.git"
-branch = "master"
+tar = "https://tar.goaccess.io/goaccess-1.9.4.tar.gz"
 patches = [
     "0001-Ensure-fixed-width-integers-and-PIPE_BUF-are-defined.patch",
     "0002-Add-option-to-ignore-building-bin2c.patch",
