@@ -26,11 +26,11 @@ export COOKBOOK_NOSTRIP=1
 COOKBOOK_CONFIGURE_FLAGS+=(
     CFLAGS="-I${COOKBOOK_SYSROOT}/usr/include"
     LDFLAGS="-L${COOKBOOK_SYSROOT}/usr/lib"
-    --host=$ARCH-unknown-redox \
-    --enable-utf8 \
-    --disable-geoip \
-    --prefix=/usr \
-    --disable-dependency-tracking \
+    --host=$ARCH-unknown-redox
+    --enable-utf8
+    --disable-geoip
+    --prefix=/usr
+    --disable-dependency-tracking
     --with-bin2c-path="$COOKBOOK_BUILD/src/bin2c"
 )
 cookbook_configure
