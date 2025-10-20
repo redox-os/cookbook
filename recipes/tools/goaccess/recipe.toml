@@ -1,7 +1,11 @@
 
 [source]
-git = "https://github.com/rsm-gh/goaccess.git"
-branch = "redox"
+git = "https://github.com/allinurl/goaccess.git"
+branch = "master"
+patches = [
+    "0001-Ensure-fixed-width-integers-and-PIPE_BUF-are-defined.patch",
+    "0002-Add-option-to-ignore-building-bin2c.patch",
+]
 
 [build]
 dependencies = ["ncursesw"]
@@ -25,7 +29,6 @@ gcc -O2 -o "$COOKBOOK_BUILD/bin2c" "$COOKBOOK_SOURCE/src/bin2c.c"
 chmod +x "$COOKBOOK_BUILD/bin2c"
 
 # Configure for cross-compilation
-
 ARCH="${COOKBOOK_REDOX_TARGET:-$(uname -m)-unknown-redox}"
 
 export CFLAGS="-I/mnt/redox/cookbook/recipes/libs/ncursesw/target/$ARCH/stage/usr/include"
