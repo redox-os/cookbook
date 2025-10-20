@@ -11,6 +11,7 @@ patches = [
 dependencies = ["ncursesw"]
 template = "custom"
 script = """
+DYNAMIC_INIT
 export COOKBOOK_NOSTRIP=1
 
 # Generate the make files
