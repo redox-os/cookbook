@@ -7,44 +7,32 @@ patches = [
     "redox2.patch",
 ]
 
+# This is only needed when compiling from git, tar.gz already have the make files.
+#script = """
+#autoreconf -fiv
+#automake --add-missing --copy --force-missing
+#"""
+
 [build]
 dependencies = ["ncursesw"]
 template = "custom"
 script = """
-DYNAMIC_INIT
-export COOKBOOK_NOSTRIP=1
-
-# Generate the make files
-cd "$COOKBOOK_SOURCE"
-autoreconf -fiv
-automake --add-missing --copy --force-missing
-
-# Copy the sources
-mkdir -p "$COOKBOOK_BUILD"
-cd "$COOKBOOK_BUILD"
-rsync -a --delete "${COOKBOOK_SOURCE}/" .
-
-# Compile bin2c
+# Compile bin2c on the host
 gcc -O2 -o "$COOKBOOK_BUILD/bin2c" "$COOKBOOK_SOURCE/src/bin2c.c"
 chmod +x "$COOKBOOK_BUILD/bin2c"
 
-# Configure for cross-compilation
-export CFLAGS="-I/mnt/redox/cookbook/recipes/libs/ncursesw/target/$ARCH-unknown-redox/stage/usr/include"
-export LDFLAGS="-L/mnt/redox/cookbook/recipes/libs/ncursesw/target/$ARCH-unknown-redox/stage/usr/lib"
-
-./configure \
+DYNAMIC_INIT
+export COOKBOOK_NOSTRIP=1
+COOKBOOK_CONFIGURE_FLAGS+=(
+    CFLAGS="-I${COOKBOOK_SYSROOT}/usr/include"
+    LDFLAGS="-L${COOKBOOK_SYSROOT}/usr/lib"
     --host=$ARCH-unknown-redox \
     --enable-utf8 \
     --disable-geoip \
     --prefix=/usr \
     --disable-dependency-tracking \
     --with-bin2c-path="$COOKBOOK_BUILD/src/bin2c"
-    
-# Build
-make
-
-# Install
-mkdir -p "$COOKBOOK_STAGE/usr/bin"
-cp "$COOKBOOK_BUILD/goaccess" "$COOKBOOK_STAGE/usr/bin/"
+)
+cookbook_configure
 """
 
