@@ -3,8 +3,8 @@
 tar = "https://tar.goaccess.io/goaccess-1.9.4.tar.gz"
 blake3 = "a7a7641c98956e8941191956129141e071321851d004269c7d21bce536d9224a"
 patches = [
-    "0001-Ensure-fixed-width-integers-and-PIPE_BUF-are-defined.patch",
-    "0002-Add-option-to-ignore-building-bin2c.patch",
+    "redox1.patch",
+    "redox2.patch",
 ]
 
 [build]
