@@ -11,7 +11,7 @@ patches = [
     "redox2.patch",
 ]
 
-# This is only needed when compiling from git, tar.gz already have the make files.
+# This is only needed when compiling from git. The tar.gz already has the make files.
 script = """
 autoreconf -fiv
 automake --add-missing --copy --force-missing
@@ -20,12 +20,48 @@ automake --add-missing --copy --force-missing
 [build]
 dependencies = ["ncursesw"]
 template = "custom"
+
+# This script compiles and allows the software to start the TUI or
+# display the help dialog but it crashes just after.
 script = """
-# Compile bin2c on the host
+export COOKBOOK_NOSTRIP=1
+
+# Copy the sources
+mkdir -p "$COOKBOOK_BUILD"
+cd "$COOKBOOK_BUILD"
+rsync -a --delete "${COOKBOOK_SOURCE}/" .
+
+# Compile bin2c to be executed on the host
 gcc -O2 -o "$COOKBOOK_BUILD/bin2c" "$COOKBOOK_SOURCE/src/bin2c.c"
 chmod +x "$COOKBOOK_BUILD/bin2c"
 
-DYNAMIC_INIT
+# Configure for cross-compilation
+export CFLAGS="-I${COOKBOOK_SYSROOT}/usr/include"
+export LDFLAGS="-L${COOKBOOK_SYSROOT}/usr/lib"
+
+./configure \
+    --host=$ARCH-unknown-redox \
+    --enable-utf8 \
+    --disable-geoip \
+    --prefix=/usr \
+    --disable-dependency-tracking \
+    --with-bin2c-path="$COOKBOOK_BUILD/src/bin2c"
+
+# Build
+make
+
+# Install
+mkdir -p "$COOKBOOK_STAGE/usr/bin"
+cp "$COOKBOOK_BUILD/goaccess" "$COOKBOOK_STAGE/usr/bin/"
+"""
+
+# This script compiles, but makes the binary totally fail
+script_to_be = """
+# Compile bin2c to be executed on the host
+gcc -O2 -o "$COOKBOOK_BUILD/bin2c" "$COOKBOOK_SOURCE/src/bin2c.c"
+chmod +x "$COOKBOOK_BUILD/bin2c"
+
+# Compile goaccess
 export COOKBOOK_NOSTRIP=1
 COOKBOOK_CONFIGURE_FLAGS+=(
     CFLAGS="-I${COOKBOOK_SYSROOT}/usr/include"
@@ -39,4 +75,6 @@ COOKBOOK_CONFIGURE_FLAGS+=(
 )
 cookbook_configure
 """
+
+
 
