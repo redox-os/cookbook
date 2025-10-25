@@ -3,7 +3,7 @@ name = "redox_cookbook"
 version = "0.1.0"
 authors = ["Jeremy Soller <jackpot51@gmail.com>"]
 edition = "2024"
-default-run = "cook"
+default-run = "repo"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,6 +21,7 @@ path = "src/lib.rs"
 doctest = false
 
 [dependencies]
+anyhow = "1"
 blake3 = "=1.5.3" # 1.5.4 is incompatible with blake3 0.3 dependency from pkgar
 ignore = "0.4"
 object = { version = "0.36", features = ["build_core"] }
@@ -35,6 +36,11 @@ serde = { version = "=1.0.197", features = ["derive"] }
 termion = "4"
 toml = "0.8"
 walkdir = "2.3.1"
+
+[dependencies.ratatui]
+version = "0.29.0"
+default-features = false
+features = ["termion"]
 
 [dev-dependencies]
 tempfile = "3"
