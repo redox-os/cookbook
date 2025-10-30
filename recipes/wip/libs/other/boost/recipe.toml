@@ -9,13 +9,14 @@ blake3 = "9c6eb6bb7866aeb595e14279fcc5a5c7f2279dd41e946e14e2c3d5c1fb8358d3"
 [build]
 template = "custom"
 dependencies = [
-    # "libicu",
+    "libicu",
     # "liblzma",
-    # "bzip2",
-    # "zlib",
-    # "zstd",
+    "bzip2",
+    "zlib",
+    "zstd",
 ]
 script = """
+DYNAMIC_INIT
 BOOST_ROOT="${COOKBOOK_STAGE}/usr"
 mkdir -p "${BOOST_ROOT}"
 

@@ -3,3 +3,5 @@
 tar = "https://releases.pagure.org/libaio/libaio-0.3.113.tar.gz"
 [build]
 template = "custom"
+script = """
+"""
