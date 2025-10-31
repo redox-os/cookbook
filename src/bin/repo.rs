@@ -541,16 +541,17 @@ fn handle_tree(recipes: &Vec<CookRecipe>, _config: &CliConfig) -> anyhow::Result
     let num_roots = roots.len();
 
     for (i, root) in roots.iter().enumerate() {
-        let target_dir = create_target_dir(&root.dir).map_err(|e| anyhow!(e))?;
-        display_tree_entry(
-            &root.name,
-            &recipe_map,
-            &target_dir,
-            "",
-            i == num_roots - 1,
-            &mut visited,
-            &mut total_size,
-        )?;
+        if !root.is_deps {
+            display_tree_entry(
+                &root.name,
+                &recipe_map,
+                &root.dir,
+                "",
+                i == num_roots - 1,
+                &mut visited,
+                &mut total_size,
+            )?;
+        }
     }
 
     println!("");
