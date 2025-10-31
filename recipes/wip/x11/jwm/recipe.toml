@@ -1,7 +1,6 @@
 [source]
-tar = "https://download.gnome.org/sources/pango/1.56/pango-1.56.3.tar.xz"
-blake3 = "78542feaaf007c1d648b94c4e9b6655ed7515d27ce434766aea99bef886c21ac"
-patches = ["redox.patch"]
+tar = "https://github.com/joewing/jwm/releases/download/v2.4.6/jwm-2.4.6.tar.xz"
+blake3 = "08d69eee4584ba9346d4f326581e8538247a37d6fe11dd8604de7a8a7adbdd51"
 
 [build]
 dependencies = [
@@ -14,27 +13,33 @@ dependencies = [
     "glib",
     "harfbuzz",
     "libffi",
+    "libice",
     "libiconv",
+    "libjpeg",
     "libpng",
     "libpthread-stubs",
+    #TODO for SVG support: "librsvg",
+    "libsm",
     "libx11",
     "libxau",
     "libxcb",
     "libxext",
     "libxft",
+    "libxmu",
+    "libxpm",
     "libxrender",
-    "pcre",
+    "libxt",
+    "pango",
     "pcre2",
     "pixman",
     "x11proto",
-    "xcb-proto",
-    "xextproto",
     "zlib",
 ]
 template = "custom"
 script = """
 DYNAMIC_INIT
-cookbook_meson \
-    -Dbuild-examples=false \
-    -Dbuild-testsuite=false
+export LIBS="-liconv -lintl"
+rsync -a --delete "${COOKBOOK_SOURCE}/" ./
+COOKBOOK_CONFIGURE="./configure"
+cookbook_configure
 """

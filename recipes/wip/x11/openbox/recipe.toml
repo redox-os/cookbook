@@ -1,7 +1,11 @@
+#TODO: launches but has segfaults at runtime
 [source]
-tar = "https://download.gnome.org/sources/pango/1.56/pango-1.56.3.tar.xz"
-blake3 = "78542feaaf007c1d648b94c4e9b6655ed7515d27ce434766aea99bef886c21ac"
-patches = ["redox.patch"]
+tar = "https://openbox.org/dist/openbox/openbox-3.6.1.tar.xz"
+blake3 = "6bf434e52e04a9cfcd67c11cb9105b93fe2055dca49f1bed2c105fd117e88ef4"
+script = """
+DYNAMIC_INIT
+autotools_recursive_regenerate
+"""
 
 [build]
 dependencies = [
@@ -22,19 +26,17 @@ dependencies = [
     "libxcb",
     "libxext",
     "libxft",
+    "libxml2",
     "libxrender",
-    "pcre",
+    "pango",
     "pcre2",
     "pixman",
     "x11proto",
-    "xcb-proto",
-    "xextproto",
+    "xz",
     "zlib",
 ]
 template = "custom"
 script = """
 DYNAMIC_INIT
-cookbook_meson \
-    -Dbuild-examples=false \
-    -Dbuild-testsuite=false
+cookbook_configure
 """
