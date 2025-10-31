@@ -1,7 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
     fs::read_to_string,
-    path::Path,
 };
 
 use anyhow::{Context, anyhow};
@@ -12,7 +11,6 @@ use crate::{cook::fs::create_target_dir, recipe::CookRecipe};
 pub fn display_tree_entry(
     package_name: &PackageName,
     recipe_map: &HashMap<&PackageName, &CookRecipe>,
-    package_dir: &Path,
     prefix: &str,
     is_last: bool,
     visited: &mut HashSet<PackageName>,
@@ -25,13 +23,7 @@ pub fn display_tree_entry(
     } else {
         "├── "
     };
-    let child_prefix = if prefix.is_empty() {
-        ""
-    } else if is_last {
-        "    "
-    } else {
-        "│   "
-    };
+    let child_prefix = if is_last { "    " } else { "│   " };
 
     let cook_recipe = match recipe_map.get(package_name) {
         Some(r) => r,
@@ -45,6 +37,7 @@ pub fn display_tree_entry(
         }
     };
 
+    let package_dir = &cook_recipe.dir;
     let pkg_path = create_target_dir(package_dir)
         .map_err(|e| anyhow!(e))?
         .join("stage.pkgar");
@@ -59,9 +52,16 @@ pub fn display_tree_entry(
         Err(_) => ("(not built)".to_string(), 0),
     };
 
-    println!("{}{}{} [{}]", prefix, line_prefix, package_name, size_str);
+    let deduped = visited.contains(package_name);
+    println!(
+        "{}{}{} [{}]",
+        prefix,
+        line_prefix,
+        package_name,
+        if deduped { "deduped" } else { &size_str }
+    );
 
-    if visited.contains(package_name) {
+    if deduped {
         // Existing package
         return Ok(());
     }
@@ -90,10 +90,6 @@ pub fn display_tree_entry(
         display_tree_entry(
             dep_name,
             recipe_map,
-            recipe_map
-                .get(dep_name)
-                .map(|p| &p.dir)
-                .ok_or(anyhow!("Can't find deps of {dep_name} in {package_name}"))?,
             &format!("{}{}", prefix, child_prefix),
             i == deps_count - 1,
             visited,
