@@ -360,7 +360,7 @@ fn parse_args(args: Vec<String>) -> anyhow::Result<(CliConfig, CliCommand, Vec<C
                     .filter_map(|(f, v)| {
                         // same logic as list_installer
                         match v {
-                            PackageConfig::Build(rule) if rule == "recipe" || rule == "source" => {}
+                            PackageConfig::Build(rule) if rule == "source" || rule == "local" => {}
                             PackageConfig::Build(rule) if rule == "binary" || rule == "ignore" => {
                                 return None;
                             }
@@ -402,10 +402,10 @@ fn parse_args(args: Vec<String>) -> anyhow::Result<(CliConfig, CliCommand, Vec<C
         for recipe in recipes.iter_mut() {
             if let Some(recipe_conf) = conf.packages.get(recipe.name.as_str()) {
                 match recipe_conf {
-                    // build locally as usual
-                    PackageConfig::Build(rule) if rule == "recipe" => {}
-                    // keep the source changes
-                    PackageConfig::Build(rule) if rule == "source" => recipe.recipe.source = None,
+                    // build from source as usual
+                    PackageConfig::Build(rule) if rule == "source" => {}
+                    // keep local changes
+                    PackageConfig::Build(rule) if rule == "local" => recipe.recipe.source = None,
                     // should not gone here, but if it does, then some deps need it
                     PackageConfig::Build(rule) if rule == "binary" || rule == "ignore" => {
                         recipe.recipe.source = None;
@@ -416,8 +416,8 @@ fn parse_args(args: Vec<String>) -> anyhow::Result<(CliConfig, CliCommand, Vec<C
                     }
                     PackageConfig::Build(rule) => {
                         return Err(anyhow!(
-                            // Fail fast because we could risk losing local changes if "source" was typo'ed
-                            "Invalid pkg config {} = \"{}\"\nExpecting either 'recipe', 'source', 'binary' or 'ignore'",
+                            // Fail fast because we could risk losing local changes if "local" was typo'ed
+                            "Invalid pkg config {} = \"{}\"\nExpecting either 'source', 'local', 'binary' or 'ignore'",
                             recipe.name.as_str(),
                             rule
                         ));
