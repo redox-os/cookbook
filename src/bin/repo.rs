@@ -7,6 +7,7 @@ use cookbook::cook::fetch::{fetch, fetch_offline};
 use cookbook::cook::fs::create_target_dir;
 use cookbook::cook::package::package;
 use cookbook::cook::pty::{PtyOut, UnixSlavePty, setup_pty};
+use cookbook::cook::tree::{display_tree_entry, format_size};
 use cookbook::recipe::{BuildKind, CookRecipe};
 use pkg::PackageName;
 use pkg::package::PackageError;
@@ -19,7 +20,7 @@ use ratatui::widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragra
 use redox_installer::PackageConfig;
 use redoxer::target;
 use std::borrow::Cow;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::{Read, Write, stderr, stdin, stdout};
 use std::path::PathBuf;
 use std::process::Command;
@@ -95,7 +96,7 @@ impl CliCommand {
         *self == CliCommand::Tree || *self == CliCommand::Find
     }
     pub fn is_building(&self) -> bool {
-        *self == CliCommand::Fetch || *self == CliCommand::Cook
+        *self == CliCommand::Fetch || *self == CliCommand::Cook || *self == CliCommand::Tree
     }
     pub fn is_cleaning(&self) -> bool {
         *self == CliCommand::Clean || *self == CliCommand::Unfetch
@@ -195,6 +196,9 @@ fn main_inner() -> anyhow::Result<()> {
         }
         return Ok(());
     }
+    if command == CliCommand::Tree {
+        return handle_tree(&recipe_names, &config);
+    }
 
     let verbose = config.cook.verbose;
     for recipe in &recipe_names {
@@ -258,7 +262,7 @@ fn repo_inner(
         CliCommand::Unfetch => handle_clean(recipe, config, true, true)?,
         CliCommand::Clean => handle_clean(recipe, config, false, true)?,
         CliCommand::Push => handle_push(recipe, config)?,
-        CliCommand::Tree => todo!("tree command is WIP"),
+        CliCommand::Tree => unreachable!(),
         CliCommand::Find => println!("{}", recipe.dir.display()),
     })
 }
@@ -380,7 +384,11 @@ fn parse_args(args: Vec<String>) -> anyhow::Result<(CliConfig, CliCommand, Vec<C
         }
 
         if command.is_building() {
-            CookRecipe::get_build_deps_recursive(&recipe_names, !config.with_package_deps)?
+            CookRecipe::get_build_deps_recursive(
+                &recipe_names,
+                // In CliCommand::Cook, is_deps==true will make it skip checking source
+                command == CliCommand::Tree || !config.with_package_deps,
+            )?
         } else {
             recipe_names
                 .iter()
@@ -394,7 +402,7 @@ fn parse_args(args: Vec<String>) -> anyhow::Result<(CliConfig, CliCommand, Vec<C
         for recipe in recipes.iter_mut() {
             if let Some(recipe_conf) = conf.packages.get(recipe.name.as_str()) {
                 match recipe_conf {
-                    // don't modify anything
+                    // build locally as usual
                     PackageConfig::Build(rule) if rule == "recipe" => {}
                     // keep the source changes
                     PackageConfig::Build(rule) if rule == "source" => recipe.recipe.source = None,
@@ -406,9 +414,22 @@ fn parse_args(args: Vec<String>) -> anyhow::Result<(CliConfig, CliCommand, Vec<C
                             dependencies: Vec::new(),
                         };
                     }
+                    PackageConfig::Build(rule) => {
+                        return Err(anyhow!(
+                            // Fail fast because we could risk losing local changes if "source" was typo'ed
+                            "Invalid pkg config {} = \"{}\"\nExpecting either 'recipe', 'source', 'binary' or 'ignore'",
+                            recipe.name.as_str(),
+                            rule
+                        ));
+                    }
                     _ => {
                         if conf.general.repo_binary == Some(true) {
+                            // same reason as Build("binary")
                             recipe.recipe.source = None;
+                            recipe.recipe.build = cookbook::recipe::BuildRecipe {
+                                kind: BuildKind::Remote,
+                                dependencies: Vec::new(),
+                            };
                         }
                     }
                 }
@@ -506,6 +527,36 @@ fn handle_push(recipe: &CookRecipe, config: &CliConfig) -> anyhow::Result<()> {
         archive_path.display(),
         config.sysroot_dir.display(),
     ))
+}
+
+fn handle_tree(recipes: &Vec<CookRecipe>, _config: &CliConfig) -> anyhow::Result<()> {
+    let recipe_map: HashMap<&PackageName, &CookRecipe> =
+        recipes.iter().map(|r| (&r.name, r)).collect();
+
+    let mut total_size: u64 = 0;
+    let mut visited: HashSet<PackageName> = HashSet::new();
+
+    let roots: Vec<&CookRecipe> = recipes.iter().filter(|r| !r.is_deps).collect();
+
+    let num_roots = roots.len();
+
+    for (i, root) in roots.iter().enumerate() {
+        let target_dir = create_target_dir(&root.dir).map_err(|e| anyhow!(e))?;
+        display_tree_entry(
+            &root.name,
+            &recipe_map,
+            &target_dir,
+            "",
+            i == num_roots - 1,
+            &mut visited,
+            &mut total_size,
+        )?;
+    }
+
+    println!("");
+    println!("Estimated image size: {}", format_size(total_size));
+
+    Ok(())
 }
 
 //
