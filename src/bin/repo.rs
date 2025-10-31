@@ -544,7 +544,7 @@ fn handle_tree(recipes: &Vec<CookRecipe>, _config: &CliConfig) -> anyhow::Result
         display_tree_entry(
             &root.name,
             &recipe_map,
-            "",
+            " ",
             i == num_roots - 1,
             &mut visited,
             &mut total_size,

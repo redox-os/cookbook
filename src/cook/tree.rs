@@ -16,13 +16,7 @@ pub fn display_tree_entry(
     visited: &mut HashSet<PackageName>,
     total_size: &mut u64,
 ) -> anyhow::Result<()> {
-    let line_prefix = if prefix.is_empty() {
-        ""
-    } else if is_last {
-        "└── "
-    } else {
-        "├── "
-    };
+    let line_prefix = if is_last { "└── " } else { "├── " };
     let child_prefix = if is_last { "    " } else { "│   " };
 
     let cook_recipe = match recipe_map.get(package_name) {
@@ -44,25 +38,20 @@ pub fn display_tree_entry(
     let pkg_toml = create_target_dir(package_dir)
         .map_err(|e| anyhow!(e))?
         .join("stage.toml");
-    let (size_str, pkg_size) = match std::fs::metadata(&pkg_path) {
-        Ok(meta) => {
-            let size = meta.len();
-            (format_size(size), size)
-        }
-        Err(_) => ("(not built)".to_string(), 0),
-    };
 
     let deduped = visited.contains(package_name);
-    println!(
-        "{}{}{} [{}]",
-        prefix,
-        line_prefix,
-        package_name,
-        if deduped { "deduped" } else { &size_str }
-    );
+    let (size_str, pkg_size) = match (std::fs::metadata(&pkg_path), deduped) {
+        (_, true) => ("".to_string(), 0),
+        (Ok(meta), _) => {
+            let size = meta.len();
+            (format!("[{}]", format_size(size)), size)
+        }
+        (Err(_), _) => ("(not built)".to_string(), 0),
+    };
+
+    println!("{}{}{} {}", prefix, line_prefix, package_name, size_str);
 
     if deduped {
-        // Existing package
         return Ok(());
     }
 
