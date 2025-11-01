@@ -1,0 +1,12 @@
+--- orgsource/firefox-136.0.2/js/src/jsmath.cpp	2025-03-17 18:29:01.000000000 +0100
++++ source/js/src/jsmath.cpp	2025-03-23 00:28:21.434088894 +0100
+@@ -16,7 +16,8 @@
+ #include "mozilla/RandomNum.h"
+ #include "mozilla/WrappingOperations.h"
+ 
+-#include <cmath>
++//#include <cmath>
++#include <math.h>
+ 
+ #include "fdlibm.h"
+ #include "jsapi.h"

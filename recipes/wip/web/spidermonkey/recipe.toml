@@ -1,0 +1,51 @@
+[source]
+tar = "https://ftp.mozilla.org/pub/firefox/releases/136.0.2/source/firefox-136.0.2.source.tar.xz"
+blake3 = "7d4ab084f537dc9972ca87a81219149027737666f987fc5d3c29721b151708b6"
+
+patches = [
+    "01_redox.patch",
+    "02_redox.patch",
+    "03_redox_config_sub.patch",
+    "04_redox_kernel.patch",
+    "05_mozglue.patch",
+    "06_cargo_toml.patch",
+    "07_change_cmath_to_math.patch",
+    "08_remove_std_from_wchar_methods.patch"
+]
+
+[build]
+template = "custom"
+dependencies = [
+    "relibc",
+    "zlib"
+]
+
+script = """
+export HOST_CC=$(which gcc)
+export HOST_CXX=$(which g++)
+export HOST_LDFLAGS=-lc
+
+# these flags suffice instead of the crazy hack with host-compiler-wrappers from earlier 
+export MOZ_CARGO_WRAP_HOST_LD="$HOST_CC"
+export MOZ_CARGO_WRAP_HOST_LD_CXX="$HOST_CXX"
+export MOZ_CARGO_WRAP_HOST_LDFLAGS=$LDFLAGS
+
+#TODO: check paths for spaces!
+export LDFLAGS="-L${COOKBOOK_SYSROOT}/lib"
+export CFLAGS="${CFLAGS} -fpermissive"
+export CXXFLAGS="${CXXFLAGS} -fpermissive"
+
+
+# These ensure that pkg-config gets the right flags from the sysroot
+export PKG_CONFIG_ALLOW_CROSS=1
+export PKG_CONFIG_PATH=
+export PKG_CONFIG_LIBDIR="${COOKBOOK_SYSROOT}/lib/pkgconfig"
+export PKG_CONFIG_SYSROOT_DIR="${COOKBOOK_SYSROOT}"
+
+export MOZCONFIG="${COOKBOOK_RECIPE}/mozconfig"
+rsync -a --delete "${COOKBOOK_SOURCE}/" ./
+PS4='+ $(basename "$0"):$LINENO: '
+
+./mach build
+echo "Exit status: $?"
+"""
