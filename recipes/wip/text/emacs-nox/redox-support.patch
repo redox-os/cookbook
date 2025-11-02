@@ -1,0 +1,162 @@
+diff -ruwN source/configure.ac source-new/configure.ac
+--- source/configure.ac	2023-07-10 05:21:54.000000000 +0000
++++ source-new/configure.ac	2025-11-02 00:00:00.000000000 +0000
+@@ -806,6 +806,10 @@ case "${canonical}" in
+
+   *-haiku )
+     opsys=haiku
++  ;;
++
++  *-*-redox* )
++    opsys=redox
+   ;;
+
+   ## Intel 386 machines where we don't care about the manufacturer.
+@@ -883,6 +887,15 @@ fi
+
+ AC_PROG_CC_C_O
+
++dnl When cross-compiling, we need a compiler for the build platform
++dnl to compile build tools that run during the build process.
++if test "$cross_compiling" = yes; then
++  AC_MSG_CHECKING([for build system compiler])
++  CC_FOR_BUILD=${CC_FOR_BUILD-gcc}
++  AC_MSG_RESULT([$CC_FOR_BUILD])
++fi
++AC_SUBST([CC_FOR_BUILD])
++
+ if test x$GCC = xyes; then
+   test "x$GCC_TEST_OPTIONS" != x && CC="$CC $GCC_TEST_OPTIONS"
+ fi
+@@ -6730,7 +6743,7 @@ case $opsys in
+     ;;
+   esac
+
+-  gnu-linux | gnu-kfreebsd | dragonfly | freebsd | openbsd | netbsd | darwin | nacl )
++  gnu-linux | gnu-kfreebsd | dragonfly | freebsd | openbsd | netbsd | darwin | nacl | redox )
+     dnl if HAVE_GRANTPT
+     if test "x$ac_cv_func_grantpt" = xyes; then
+       AC_DEFINE([UNIX98_PTYS], [1], [Define if the system has Unix98 PTYs.])
+@@ -6755,6 +6768,10 @@ case $opsys in
+ 	  [AC_DEFINE([PTY_NAME_SPRINTF], [sprintf (pty_name, "/dev/ptmx");])])
+       fi
+     fi
++    dnl Redox relibc doesn't have _setjmp/_longjmp, force use of sigsetjmp
++    if test "$opsys" = "redox"; then
++      ac_cv_func__setjmp=no
++    fi
+     ;;
+
+   haiku*)
+diff -ruwN source/lib-src/Makefile.in source-new/lib-src/Makefile.in
+--- source/lib-src/Makefile.in	2023-07-10 05:21:54.000000000 +0000
++++ source-new/lib-src/Makefile.in	2025-11-02 00:00:00.000000000 +0000
+@@ -30,6 +30,7 @@ EMACSOPT = -batch --no-site-file --no-site-lisp
+ # ==================== Things 'configure' will edit ====================
+
+ CC=@CC@
++CC_FOR_BUILD=@CC_FOR_BUILD@
+ CXX=@CXX@
+ CFLAGS=@CFLAGS@
+ CXXFLAGS=@CXXFLAGS@
+@@ -413,10 +414,10 @@ movemail${EXEEXT}: ${srcdir}/movemail.c $(NTLIB) $(config_h)
+ 	  $(NTLIB) $(LOADLIBES) $(LIBS_MOVE) -o $@
+
+ make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h)
+-	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
++	$(AM_V_CCLD)$(CC_FOR_BUILD) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
+
+ make-fingerprint${EXEEXT}: ${srcdir}/make-fingerprint.c $(NTLIB) $(config_h)
+-	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
++	$(AM_V_CCLD)$(CC_FOR_BUILD) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
+
+ pop.o: ${srcdir}/pop.c ${srcdir}/pop.h ${srcdir}/../lib/min-max.h $(config_h)
+ 	$(AM_V_CC)$(CC) -c ${CPP_CFLAGS} ${MOVE_FLAGS} $<
+diff -ruwN source/src/sysdep.c source-new/src/sysdep.c
+--- source/src/sysdep.c	2023-07-10 05:21:54.000000000 +0000
++++ source-new/src/sysdep.c	2025-11-02 00:00:00.000000000 +0000
+@@ -562,7 +562,11 @@ child_setup_tty (int out)
+ #ifdef OLCUC
+   s.main.c_oflag &= ~OLCUC;	/* Disable upcasing on output.  */
+ #endif
++#ifdef TAB3
+   s.main.c_oflag &= ~TAB3;	/* Disable tab expansion */
++#elif defined(XTABS)
++  s.main.c_oflag &= ~XTABS;	/* Disable tab expansion (TAB3 alternative) */
++#endif
+   s.main.c_cflag = (s.main.c_cflag & ~CSIZE) | CS8; /* Don't strip 8th bit */
+   s.main.c_cc[VERASE] = CDISABLE;	/* disable erase processing */
+   s.main.c_cc[VKILL] = CDISABLE;	/* disable kill processing */
+@@ -1163,7 +1167,11 @@ init_sys_modes (struct tty_display_info *tty_out)
+
+   tty.main.c_oflag &= ~ONLCR;	/* Disable map of NL to CR-NL
+                                    on output */
++#ifdef TAB3
+   tty.main.c_oflag &= ~TAB3;	/* Disable tab expansion */
++#elif defined(XTABS)
++  tty.main.c_oflag &= ~XTABS;	/* Disable tab expansion (TAB3 alternative) */
++#endif
+ #ifdef CS8
+   if (tty_out->meta_key)
+     {
+@@ -2431,12 +2439,13 @@ sys_fstatat (int dirfd, char const *filename, struct stat *st, int flags)
+ static int
+ sys_openat (int dirfd, char const *file, int oflags, int mode)
+ {
+-#ifdef O_PATH
++#if defined(O_PATH) && !defined(__redox__)
+   return openat (dirfd, file, oflags, mode);
+ #else
+   /* On platforms without O_PATH, emacs_openat's callers arrange for
+      DIRFD to be AT_FDCWD, so it should be safe to just call 'open'.
+-     This ports to old platforms like OS X 10.9 that lack openat.  */
++     This ports to old platforms like OS X 10.9 that lack openat.
++     Redox defines O_PATH but doesn't implement openat(). */
+   eassert (dirfd == AT_FDCWD);
+   return open (file, oflags, mode);
+ #endif
+diff -ruwN source/lib/fchmodat.c source-new/lib/fchmodat.c
+--- source/lib/fchmodat.c	2023-07-10 05:21:54.000000000 +0000
++++ source-new/lib/fchmodat.c	2025-11-02 00:00:00.000000000 +0000
+@@ -90,8 +90,14 @@ rpl_fchmodat (int dir, char const *file, mode_t mode, int flags)
+       /* Open a file descriptor with O_NOFOLLOW, to make sure we don't
+          follow symbolic links, if /proc is mounted.  O_PATH is used to
+          avoid a failure if the file is not readable.
+-         Cf. <https://sourceware.org/bugzilla/show_bug.cgi?id=14578>  */
++         Cf. <https://sourceware.org/bugzilla/show_bug.cgi?id=14578>
++         Redox defines O_PATH but doesn't implement openat(). */
++#if defined(O_PATH) && !defined(__redox__)
+       int fd = openat (dir, file, O_PATH | O_NOFOLLOW | O_CLOEXEC);
++#else
++      int fd = -1;
++      errno = ENOSYS;
++#endif
+       if (fd < 0)
+         return fd;
+
+diff -ruwN source/src/term.c source-new/src/term.c
+--- source/src/term.c	2023-07-10 05:21:54.000000000 +0000
++++ source-new/src/term.c	2025-11-04 00:00:00.000000000 +0000
+@@ -4154,6 +4154,7 @@
+ #ifndef DOS_NT
+   set_tty_hooks (terminal);
+
++#ifndef __redox__
+   {
+     /* Open the terminal device.  */
+
+@@ -4186,6 +4187,14 @@
+     if (!O_IGNORE_CTTY && !ctty)
+       dissociate_if_controlling_tty (fd);
+   }
++#else /* __redox__ */
++  /* Redox uses scheme URLs like "libc:tty" for /dev/tty, which
++     can't be opened with open().  Use stdin/stdout directly. */
++  tty->output = stdout;
++  tty->input = stdin;
++  tty->name = xstrdup (name);
++  terminal->name = xstrdup (name);
++#endif /* __redox__ */
+
+   tty->type = xstrdup (terminal_type);
+
