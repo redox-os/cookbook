@@ -223,6 +223,7 @@ impl CookRecipe {
         recurse_package_deps: bool,
         collect_build_deps: bool,
         collect_package_deps: bool,
+        collect_self: bool,
         recursion: usize,
     ) -> Result<Vec<Self>, PackageError> {
         if recursion == 0 {
@@ -240,6 +241,7 @@ impl CookRecipe {
                     recurse_package_deps,
                     collect_build_deps,
                     collect_package_deps,
+                    collect_build_deps,
                     recursion - 1,
                 )
                 .map_err(|mut err| {
@@ -263,6 +265,7 @@ impl CookRecipe {
                     recurse_package_deps,
                     collect_build_deps,
                     collect_package_deps,
+                    collect_package_deps,
                     recursion - 1,
                 )
                 .map_err(|mut err| {
@@ -279,7 +282,7 @@ impl CookRecipe {
                 }
             }
 
-            if !recipes.contains(&recipe) {
+            if collect_self && !recipes.contains(&recipe) {
                 recipes.push(recipe);
             }
         }
@@ -291,7 +294,7 @@ impl CookRecipe {
         names: &[PackageName],
         mark_is_deps: bool,
     ) -> Result<Vec<Self>, PackageError> {
-        let mut packages = Self::new_recursive(names, true, false, true, false, WALK_DEPTH)?;
+        let mut packages = Self::new_recursive(names, true, false, true, false, true, WALK_DEPTH)?;
 
         if mark_is_deps {
             for package in packages.iter_mut() {
@@ -307,14 +310,8 @@ impl CookRecipe {
         include_names: bool,
     ) -> Result<Vec<PackageName>, PackageError> {
         // recurse_build_deps == true here as libraries (build deps) can have runtime files (package deps)
-        let mut packages = Self::new_recursive(names, true, true, false, true, WALK_DEPTH)?;
-
-        if !include_names {
-            packages = packages
-                .into_iter()
-                .filter(|p| !names.contains(&p.name))
-                .collect();
-        }
+        let packages =
+            Self::new_recursive(names, true, true, false, true, include_names, WALK_DEPTH)?;
 
         Ok(packages.into_iter().map(|p| p.name).collect())
     }
