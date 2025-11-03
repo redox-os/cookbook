@@ -249,11 +249,9 @@ impl CookRecipe {
                     err
                 })?;
 
-                if collect_build_deps {
-                    for dependency in dependencies {
-                        if !recipes.contains(&dependency) {
-                            recipes.push(dependency);
-                        }
+                for dependency in dependencies {
+                    if !recipes.contains(&dependency) {
+                        recipes.push(dependency);
                     }
                 }
             }
@@ -273,11 +271,9 @@ impl CookRecipe {
                     err
                 })?;
 
-                if collect_package_deps {
-                    for dependency in dependencies {
-                        if !recipes.contains(&dependency) {
-                            recipes.push(dependency);
-                        }
+                for dependency in dependencies {
+                    if !recipes.contains(&dependency) {
+                        recipes.push(dependency);
                     }
                 }
             }
