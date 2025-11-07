@@ -209,11 +209,7 @@ pub fn build(
     if sysroot_dir.is_dir() {
         let sysroot_modified = modified_dir(&sysroot_dir)?;
         if sysroot_modified < source_modified || sysroot_modified < deps_modified {
-            log_to_pty!(
-                logger,
-                "DEBUG: updating '{}'",
-                sysroot_dir.display()
-            );
+            log_to_pty!(logger, "DEBUG: updating '{}'", sysroot_dir.display());
             remove_all(&sysroot_dir)?;
         }
     }
@@ -258,11 +254,7 @@ pub fn build(
     if stage_dir.is_dir() {
         let stage_modified = modified_dir(&stage_dir)?;
         if stage_modified < source_modified || stage_modified < deps_modified {
-            log_to_pty!(
-                logger,
-                "DEBUG: updating '{}'",
-                stage_dir.display()
-            );
+            log_to_pty!(logger, "DEBUG: updating '{}'", stage_dir.display());
             remove_all(&stage_dir)?;
         }
     }
