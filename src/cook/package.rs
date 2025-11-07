@@ -47,7 +47,6 @@ pub fn package(
             log_to_pty!(
                 logger,
                 "DEBUG: updating '{}'",
-                stage_dir.display(),
                 package_file.display()
             );
             remove_all(&package_file)?;
