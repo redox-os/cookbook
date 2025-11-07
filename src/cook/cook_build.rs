@@ -351,6 +351,9 @@ pub fn build(
             command.env("COOKBOOK_SOURCE", &cookbook_source);
             command.env("COOKBOOK_SYSROOT", &cookbook_sysroot);
             command.env("COOKBOOK_MAKE_JOBS", cli_jobs.to_string());
+            if cli_verbose {
+                command.env("COOKBOOK_VERBOSE", "1");
+            }
             if offline_mode {
                 command.env("COOKBOOK_OFFLINE", "1");
             }
