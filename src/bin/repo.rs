@@ -63,6 +63,7 @@ const REPO_HELP_STR: &str = r#"
 
     cook env and their defaults:
         CI=                        set to any value to disable TUI
+        COOKBOOK_LOGS=             whether to capture build logs (default is !CI)
         COOKBOOK_OFFLINE=false     prevent internet access if possible
         COOKBOOK_NONSTOP=false     pkeep running even a recipe build failed
         COOKBOOK_VERBOSE=true      print success/error on each recipe
@@ -144,7 +145,7 @@ impl CliConfig {
             cookbook_dir: current_dir.join("recipes"),
             repo_dir: current_dir.join("repo"),
             // build dir here is hardcoded in repo_builder as well
-            logs_dir: if get_config().cook.tui_logs {
+            logs_dir: if get_config().cook.logs {
                 Some(current_dir.join("build/logs"))
             } else {
                 None
@@ -264,12 +265,41 @@ fn repo_inner(
     recipe: &CookRecipe,
 ) -> Result<(), anyhow::Error> {
     Ok(match *command {
-        CliCommand::Fetch => {
-            handle_fetch(recipe, config, &None)?;
-        }
-        CliCommand::Cook => {
-            let source_dir = handle_fetch(recipe, config, &None)?;
-            handle_cook(recipe, config, source_dir, recipe.is_deps, &None)?
+        CliCommand::Fetch | CliCommand::Cook => {
+            let repo_inner_fn = move |logger: &PtyOut| -> Result<(), anyhow::Error> {
+                let source_dir = handle_fetch(recipe, config, logger)?;
+                if *command == CliCommand::Cook {
+                    handle_cook(recipe, config, source_dir, recipe.is_deps, logger)?;
+                }
+                Ok(())
+            };
+            let Some(log_path) = &config.logs_dir else {
+                return repo_inner_fn(&None);
+            };
+
+            let (status_tx, status_rx) = mpsc::channel::<StatusUpdate>();
+            let (mut stdout_writer, mut stderr_writer) = setup_logger(&status_tx, &recipe.name);
+            let mut app = TuiApp::new(vec![recipe.clone()]);
+            let th = thread::spawn(move || {
+                while let Ok(update) = status_rx.recv() {
+                    app.update_status(update);
+                }
+            });
+            let mut logger = Some((&mut stdout_writer, &mut stderr_writer));
+            let result = repo_inner_fn(&logger);
+            if let Err(err_ctx) = &result {
+                log_to_pty!(&logger, "\n{:?}", err_ctx)
+            }
+            // successful fetch is not that useful to log
+            if *command == CliCommand::Cook || result.is_err() {
+                flush_pty(&mut logger);
+                let log_path = log_path.join(format!("{}.log", recipe.name.as_str()));
+                status_tx
+                    .send(StatusUpdate::FlushLog(recipe.name.clone(), log_path))
+                    .unwrap_or_default();
+            }
+            drop(status_tx);
+            let _ = th.join();
         }
         CliCommand::Unfetch => handle_clean(recipe, config, true, true)?,
         CliCommand::Clean => handle_clean(recipe, config, false, true)?,
@@ -842,12 +872,12 @@ fn run_tui_cook(
         'done: for (recipe, source_dir) in work_rx {
             let name = recipe.name.clone();
             let is_deps = recipe.is_deps;
-            cooker_status_tx
-                .send(StatusUpdate::StartCook(name.clone()))
-                .unwrap();
             let (mut stdout_writer, mut stderr_writer) = setup_logger(&cooker_status_tx, &name);
             let mut logger = Some((&mut stdout_writer, &mut stderr_writer));
             'again: loop {
+                cooker_status_tx
+                    .send(StatusUpdate::StartCook(name.clone()))
+                    .unwrap();
                 let handler = handle_cook(
                     &recipe,
                     &cooker_config,
@@ -937,14 +967,12 @@ fn run_tui_cook(
     let fetcher_handle = thread::spawn(move || {
         'done: for recipe in fetcher_recipes {
             let name = recipe.name.clone();
-            fetcher_status_tx
-                .send(StatusUpdate::StartFetch(name.clone()))
-                .unwrap();
-
             let (mut stdout_writer, mut stderr_writer) = setup_logger(&fetcher_status_tx, &name);
             let mut logger = Some((&mut stdout_writer, &mut stderr_writer));
-
             'again: loop {
+                fetcher_status_tx
+                    .send(StatusUpdate::StartFetch(name.clone()))
+                    .unwrap();
                 let handler = handle_fetch(&recipe, &fetcher_config, &logger);
                 if let Some(log_path) = fetcher_config.logs_dir.as_ref()
                     // successful fetch log usually not that helpful

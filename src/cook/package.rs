@@ -46,7 +46,7 @@ pub fn package(
         if modified(&package_file)? < stage_modified {
             log_to_pty!(
                 logger,
-                "DEBUG: '{}' newer than '{}'",
+                "DEBUG: updating '{}'",
                 stage_dir.display(),
                 package_file.display()
             );

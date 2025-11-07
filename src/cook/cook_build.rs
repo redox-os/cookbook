@@ -171,6 +171,8 @@ pub fn build(
 ) -> Result<(PathBuf, BTreeSet<PackageName>), String> {
     let sysroot_dir = target_dir.join("sysroot");
     let stage_dir = target_dir.join("stage");
+    let cli_verbose = crate::config::get_config().cook.verbose;
+    let cli_jobs = crate::config::get_config().cook.jobs;
     if recipe.build.kind == BuildKind::None {
         // metapackages don't need to do anything here
         return Ok((stage_dir, BTreeSet::new()));
@@ -209,8 +211,7 @@ pub fn build(
         if sysroot_modified < source_modified || sysroot_modified < deps_modified {
             log_to_pty!(
                 logger,
-                "DEBUG: '{}' newer than '{}'",
-                source_dir.display(),
+                "DEBUG: updating '{}'",
                 sysroot_dir.display()
             );
             remove_all(&sysroot_dir)?;
@@ -259,8 +260,7 @@ pub fn build(
         if stage_modified < source_modified || stage_modified < deps_modified {
             log_to_pty!(
                 logger,
-                "DEBUG: '{}' newer than '{}'",
-                source_dir.display(),
+                "DEBUG: updating '{}'",
                 stage_dir.display()
             );
             remove_all(&stage_dir)?;
@@ -328,10 +328,10 @@ pub fn build(
             let cookbook_stage = stage_dir_tmp.canonicalize().unwrap();
             let cookbook_source = source_dir.canonicalize().unwrap();
             let cookbook_sysroot = sysroot_dir.canonicalize().unwrap();
-
+            let bash_args = if cli_verbose { "-ex" } else { "-e" };
             let mut command = if is_redox() {
                 let mut command = Command::new("bash");
-                command.arg("-ex");
+                command.arg(bash_args);
                 command.env("COOKBOOK_REDOXER", "cargo");
                 command
             } else {
@@ -339,7 +339,7 @@ pub fn build(
                     .canonicalize()
                     .unwrap_or(PathBuf::from("/bin/false"));
                 let mut command = Command::new(&cookbook_redoxer);
-                command.arg("env").arg("bash").arg("-ex");
+                command.arg("env").arg("bash").arg(bash_args);
                 command.env("COOKBOOK_REDOXER", &cookbook_redoxer);
                 command
             };
@@ -351,6 +351,7 @@ pub fn build(
             command.env("COOKBOOK_STAGE", &cookbook_stage);
             command.env("COOKBOOK_SOURCE", &cookbook_source);
             command.env("COOKBOOK_SYSROOT", &cookbook_sysroot);
+            command.env("COOKBOOK_MAKE_JOBS", cli_jobs.to_string());
             if offline_mode {
                 command.env("COOKBOOK_OFFLINE", "1");
             }
