@@ -29,6 +29,7 @@ fn auto_deps_from_dynamic_linking(
 ) -> BTreeSet<PackageName> {
     let mut paths = BTreeSet::new();
     let mut visited = BTreeSet::new();
+    let verbose = crate::config::get_config().cook.verbose;
     // Base directories may need to be updated for packages that place binaries in odd locations.
     let mut walk = VecDeque::from([
         stage_dir.join("libexec"),
@@ -95,7 +96,9 @@ fn auto_deps_from_dynamic_linking(
                     continue;
                 };
                 if let Ok(relative_path) = path.strip_prefix(stage_dir) {
-                    log_to_pty!(logger, "DEBUG: {} needs {}", relative_path.display(), name);
+                    if verbose {
+                        log_to_pty!(logger, "DEBUG: {} needs {}", relative_path.display(), name);
+                    }
                 }
                 needed.insert(name.to_string());
             }
@@ -129,7 +132,9 @@ fn auto_deps_from_dynamic_linking(
                         continue;
                     };
                     if needed.contains(child_name) {
-                        log_to_pty!(logger, "DEBUG: {} provides {}", dep, child_name);
+                        if verbose {
+                            log_to_pty!(logger, "DEBUG: {} provides {}", dep, child_name);
+                        }
                         deps.insert(dep.clone());
                         missing.remove(child_name);
                     }
@@ -138,8 +143,10 @@ fn auto_deps_from_dynamic_linking(
         }
     }
 
-    for name in missing {
-        log_to_pty!(logger, "WARN: {} missing", name);
+    if verbose {
+        for name in missing {
+            log_to_pty!(logger, "INFO: {} missing", name);
+        }
     }
 
     deps

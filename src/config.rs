@@ -13,11 +13,10 @@ pub struct CookConfigOpt {
     /// default value is yes if "CI" env unset and STDIN is open.
     pub tui: Option<bool>,
     /// whether to write logs to build/logs dir, default true on TUI
-    /// if set to true on non TUI, it will not print build output
     pub logs: Option<bool>,
     /// whether to ignore build errors
     pub nonstop: Option<bool>,
-    /// whether to print verbose logs to certain commands and progress
+    /// whether to print verbose logs to certain commands
     /// build failure still be printed anyway
     pub verbose: Option<bool>,
 }

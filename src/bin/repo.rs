@@ -213,17 +213,15 @@ fn main_inner() -> anyhow::Result<()> {
     for recipe in &recipe_names {
         match repo_inner(&config, &command, recipe) {
             Ok(_) => {
-                if verbose {
-                    eprintln!(
-                        "{}{}{} {} - successful{}{}",
-                        style::Bold,
-                        color::Fg(color::AnsiValue(46)),
-                        command.to_string(),
-                        recipe.name.as_str(),
-                        color::Fg(color::Reset),
-                        style::Reset,
-                    );
-                }
+                eprintln!(
+                    "{}{}{} {} - successful{}{}",
+                    style::Bold,
+                    color::Fg(color::AnsiValue(46)),
+                    command.to_string(),
+                    recipe.name.as_str(),
+                    color::Fg(color::Reset),
+                    style::Reset,
+                );
             }
             Err(e) => {
                 if config.cook.nonstop && verbose {
@@ -280,9 +278,17 @@ fn repo_inner(
             let (status_tx, status_rx) = mpsc::channel::<StatusUpdate>();
             let (mut stdout_writer, mut stderr_writer) = setup_logger(&status_tx, &recipe.name);
             let mut app = TuiApp::new(vec![recipe.clone()]);
+            app.dump_logs_anyway = true;
             let th = thread::spawn(move || {
                 while let Ok(update) = status_rx.recv() {
+                    let mut should_break = false;
+                    if let StatusUpdate::FlushLog(_p, _q) = &update {
+                        should_break = true;
+                    }
                     app.update_status(update);
+                    if should_break {
+                        break;
+                    }
                 }
             });
             let mut logger = Some((&mut stdout_writer, &mut stderr_writer));
@@ -298,7 +304,6 @@ fn repo_inner(
                     .send(StatusUpdate::FlushLog(recipe.name.clone(), log_path))
                     .unwrap_or_default();
             }
-            drop(status_tx);
             let _ = th.join();
         }
         CliCommand::Unfetch => handle_clean(recipe, config, true, true)?,
@@ -628,7 +633,7 @@ enum RecipeStatus {
     Failed(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum StatusUpdate {
     StartFetch(PackageName),
     Fetched(CookRecipe),
@@ -680,6 +685,7 @@ struct TuiApp {
     cook_panel_rect: Option<Rect>,
     log_panel_rect: Option<Rect>,
     prompt: Option<FailurePrompt>,
+    dump_logs_anyway: bool,
     dump_logs_on_exit: Option<(PackageName, String)>,
 }
 
@@ -711,6 +717,7 @@ impl TuiApp {
             cook_panel_rect: None,
             log_panel_rect: None,
             prompt: None,
+            dump_logs_anyway: false,
             dump_logs_on_exit: None,
         }
     }
@@ -789,6 +796,9 @@ impl TuiApp {
             StatusUpdate::PushLog(name, chunk) => {
                 let buffer = self.log_byte_buffer.entry(name.clone()).or_default();
                 buffer.extend_from_slice(&chunk);
+                if self.dump_logs_anyway {
+                    let _ = std::io::stdout().write_all(&chunk);
+                }
                 let log_list = self.logs.entry(name.clone()).or_default();
                 while let Some(newline_pos) = buffer.iter().position(|&b| b == b'\n') {
                     let line_bytes = buffer.drain(..=newline_pos).collect::<Vec<u8>>();
