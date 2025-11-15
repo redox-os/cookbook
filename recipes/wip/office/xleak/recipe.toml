@@ -1,5 +1,5 @@
 #TODO not compiled or tested
 [source]
-git = "https://github.com/Avarel/bvr"
+git = "https://github.com/bgreenwell/xleak"
 [build]
 template = "cargo"
