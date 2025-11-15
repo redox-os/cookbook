@@ -1,13 +1,13 @@
 #TODO compilation error
 #TODO make dependencies work
 [source]
-tar = "https://ftp.gnu.org/gnu/emacs/emacs-29.1.tar.xz"
+tar = "https://ftp.gnu.org/gnu/emacs/emacs-30.2.tar.xz"
+patches = ["redox-support.patch"]
 [build]
 template = "custom"
 dependencies = [
     "dbus",
     "libgmp",
-    "libgpm",
     "gnutls3",
     "jansson",
     "liblcms",
@@ -18,5 +18,46 @@ dependencies = [
 ]
 script = """
 export CPPFLAGS="-I${COOKBOOK_SYSROOT}/include/ncurses"
-cookbook_configure
+
+# Regenerate configure script from configure.ac after patch
+cd "${COOKBOOK_SOURCE}"
+autoconf
+
+cd "${COOKBOOK_BUILD}"
+
+COOKBOOK_CONFIGURE_FLAGS+=(
+    --build="$(gcc -dumpmachine)"
+    --host="${GNU_TARGET}"
+    --without-x
+    --without-all
+)
+
+"${COOKBOOK_CONFIGURE}" "${COOKBOOK_CONFIGURE_FLAGS[@]}" "$@"
+
+# Build only temacs binary, avoiding any steps that try to execute it
+"${COOKBOOK_MAKE}" -j "${COOKBOOK_MAKE_JOBS}" -C lib all
+"${COOKBOOK_MAKE}" -j "${COOKBOOK_MAKE_JOBS}" -C lib-src all
+"${COOKBOOK_MAKE}" -j "${COOKBOOK_MAKE_JOBS}" -C src temacs
+
+# Skip the normal install - we'll create a minimal staging for transfer to Redox
+mkdir -p "${COOKBOOK_STAGE}/usr/share/emacs-build"
+# Copy the build directory for completion on Redox
+cp -r "${COOKBOOK_BUILD}"/* "${COOKBOOK_STAGE}/usr/share/emacs-build/"
+
+# Copy essential runtime data files that temacs needs
+mkdir -p "${COOKBOOK_STAGE}/usr/share/emacs/30.2"
+cp -r "${COOKBOOK_SOURCE}/etc" "${COOKBOOK_STAGE}/usr/share/emacs/30.2/"
+cp -r "${COOKBOOK_SOURCE}/lisp" "${COOKBOOK_STAGE}/usr/share/emacs/30.2/"
+
+# Copy arch-dependent binaries from lib-src to libexec
+mkdir -p "${COOKBOOK_STAGE}/usr/libexec/emacs/30.2/${GNU_TARGET}"
+for binary in ctags ebrowse emacsclient etags hexl make-docfile make-fingerprint movemail; do
+    if [ -f "${COOKBOOK_BUILD}/lib-src/${binary}" ]; then
+        cp "${COOKBOOK_BUILD}/lib-src/${binary}" "${COOKBOOK_STAGE}/usr/libexec/emacs/30.2/${GNU_TARGET}/"
+    fi
+done
+
+# Copy temacs to a more accessible location
+mkdir -p "${COOKBOOK_STAGE}/usr/bin"
+cp "${COOKBOOK_BUILD}/src/temacs" "${COOKBOOK_STAGE}/usr/bin/"
 """
