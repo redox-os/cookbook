@@ -1,0 +1,10 @@
+--- source/build/moz.configure/init.configure	2025-03-17 18:28:56.000000000 +0100
++++ source/build/moz.configure/init.configure	2025-03-21 12:31:19.000000000 +0100
+@@ -521,6 +521,8 @@
+         canonical_os = canonical_kernel = "SunOS"
+     elif os.startswith("wasi") and allow_wasi:
+         canonical_os = canonical_kernel = "WASI"
++    elif os.startswith("redox"):
++        canonical_os = canonical_kernel ="Redox"
+     else:
+         raise ValueError("Unknown OS: %s" % os)
